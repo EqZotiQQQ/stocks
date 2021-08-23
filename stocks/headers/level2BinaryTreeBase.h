@@ -14,6 +14,10 @@ class Level2BinaryTreeBase {
 private:
     std::map<Price, vector<pair<OfferID, Count>>> bids_{};
     std::map<Price, vector<pair<OfferID, Count>>> asks_{};
+
+    std::map<OfferID, pair<Price, Count>> bids_by_offer_{};
+    std::map<OfferID, pair<Price, Count>> asks_by_offer_{};
+
     uint64_t offer_id {};
 public:
     Level2BinaryTreeBase();
