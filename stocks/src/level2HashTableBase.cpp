@@ -1,4 +1,4 @@
-#include "level2.h"
+#include "level2HashTableBase.h"
 
 #include <iostream>
 #include <functional>
@@ -11,11 +11,11 @@ using Count = uint64_t;
 
 #define print ;//std::cout << __FILE__ << ":" << __LINE__ << '\t' << __FUNCTION__ << '\n';
 
-Level2::Level2() {
+Level2HashTableBase::Level2HashTableBase() {
 
 }
 
-auto Level2::add_order(unsigned int quantity, Price price, bool isBid) -> OfferID {
+auto Level2HashTableBase::add_order(unsigned int quantity, Price price, bool isBid) -> OfferID {
     auto bids = bids_.find(price);
     current_offer_id++; // TODO: Check overflow
 
@@ -26,7 +26,7 @@ auto Level2::add_order(unsigned int quantity, Price price, bool isBid) -> OfferI
     return current_offer_id;
 }
 
-bool Level2::close_order(unsigned int quantity, OfferID id) {
+bool Level2HashTableBase::close_order(unsigned int quantity, OfferID id) {
     std::cout << "Order id to remove: " << id << "\t Quantity: " << quantity << std::endl;
     auto close_pos = ids.find(id);
 
@@ -53,7 +53,7 @@ bool Level2::close_order(unsigned int quantity, OfferID id) {
     return true;
 }
 
-bool Level2::get_offers_by_price(Price price, std::vector<std::pair<OfferID, Count>>*& vec) {
+bool Level2HashTableBase::get_offers_by_price(Price price, std::vector<std::pair<OfferID, Count>>*& vec) {
     auto bid = bids_.find(price);
     if (bid != bids_.end()) {
         vec = &(bid->second);
@@ -63,7 +63,7 @@ bool Level2::get_offers_by_price(Price price, std::vector<std::pair<OfferID, Cou
     // asks has the same algo if no ... dunno return {} or ret value as argument and bool as status
 }
 
-bool Level2::get_offers_by_id(OfferID id, std::pair<OfferID, Count>*& offer_id) {
+bool Level2HashTableBase::get_offers_by_id(OfferID id, std::pair<OfferID, Count>*& offer_id) {
     auto price = ids.find(id);
     if (price == ids.end()) {
         std::cout << "no such id in level2\n";
@@ -87,7 +87,7 @@ bool Level2::get_offers_by_id(OfferID id, std::pair<OfferID, Count>*& offer_id) 
 
 
 
-void Level2::print_level2_by_price() {
+void Level2HashTableBase::print_level2_by_price() {
     printf("print ordered by price:\n");
     std::map<Price, std::vector<std::pair<OfferID, Count>>> ordered(bids_.begin(), bids_.end());
     for (auto & it : ordered) {
@@ -97,7 +97,7 @@ void Level2::print_level2_by_price() {
     }
 }
 
-void Level2::print_level2_by_idx() {
+void Level2HashTableBase::print_level2_by_idx() {
     printf("print ordered by indexes:\n");
     for (const auto& id: ids) {
         std::pair<OfferID, Count>* offer;
@@ -106,7 +106,7 @@ void Level2::print_level2_by_idx() {
     }
 }
 
-auto Level2::get_l2_size() -> OfferID {
+auto Level2HashTableBase::get_l2_size() -> OfferID {
     unsigned long long size {};
 
     for (const auto &bid: bids_) {

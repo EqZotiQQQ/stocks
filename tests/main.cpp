@@ -1,23 +1,73 @@
-#include "level2.h"
+#include "level2Interface.h"
+
+#include <iostream>
+
+#define print std::cout << __FUNCTION__ <<std::endl;
+void t1() {
+    print
+    Level2Interface l2;
+    l2.add_order(4, 50, 1);
+    l2.add_order(2, 25, 1);
+    l2.add_order(5, 72, 1);
+    l2.add_order(1, 72, 1);
+//    l2.print_level2_by_price();
+}
+void t2() {
+    print
+    Level2Interface l2;
+    l2.add_order(10, 50, 1);
+    l2.add_order(10, 25, 1);
+    l2.add_order(10, 72, 1);
+    l2.add_order(2, 35, 0);
+    l2.add_order(1, 65, 0);
+    l2.print_level2_by_price();
+}
+void t3() {
+    print
+    Level2Interface l2;
+    l2.add_order(10, 50, 1);
+    l2.add_order(10, 25, 1);
+    l2.add_order(10, 72, 1);
+    l2.add_order(11, 35, 0);
+//    l2.print_level2_by_price();
+}
+void t4() {
+    print
+    Level2Interface l2;
+    l2.add_order(10, 50, 1);
+    l2.add_order(10, 25, 1);
+    l2.add_order(10, 72, 1);
+    l2.add_order(11, 65, 0);
+    l2.print_level2_by_price();
+}
+
+int main() {
+//    t1();
+//    t2();
+    t4();
+    return 0;
+}
+
+#if 0
 
 #include "gtest/gtest.h"
 
 #define print ;//std::cout << __FILE__ << ":" << __LINE__ << '\t' << __FUNCTION__ << '\n';
 
 TEST(Test1, createLevel2) {
-    Level2 l2;
+    Level2Interface l2;
     ASSERT_EQ(l2.get_l2_size(), 0);
 }
 
 TEST(Test1, add_one_offer) {
-    Level2 l2;
+    Level2Interface l2;
     unsigned long long order_id = l2.add_order(3, 223123, 1);
     ASSERT_EQ(order_id,1);
     ASSERT_EQ(l2.get_l2_size(), 3);
 }
 
 TEST(Test1, add_few_offers) {
-    Level2 l2;
+    Level2Interface l2;
     unsigned long long order_id1 = l2.add_order(3, 223123, 1);
     unsigned long long order_id2 = l2.add_order(5, 1223123, 1);
     unsigned long long order_id3 = l2.add_order(1, 4221, 1);
@@ -28,13 +78,13 @@ TEST(Test1, add_few_offers) {
 }
 
 TEST(Test1, remove_one_from_empty_l2) {
-    Level2 l2;
+    Level2Interface l2;
     ASSERT_EQ(l2.get_l2_size(), 0);
     ASSERT_FALSE(l2.close_order(5, 0));
 }
 
 TEST(Test1, add_then_remove_all_offer) {
-    Level2 l2;
+    Level2Interface l2;
     unsigned long long order_id1 = l2.add_order(3, 223123, 1);
     unsigned long long order_id2 = l2.add_order(5, 1223123, 1);
     unsigned long long order_id3 = l2.add_order(1, 4221, 1);
@@ -44,7 +94,7 @@ TEST(Test1, add_then_remove_all_offer) {
 }
 
 TEST(Test1, add_then_remove_one) {
-    Level2 l2;
+    Level2Interface l2;
     unsigned long long order_id1 = l2.add_order(3, 223123, 1);
     unsigned long long order_id2 = l2.add_order(5, 1223123, 1);
     unsigned long long order_id3 = l2.add_order(1, 4221, 1);
@@ -53,7 +103,7 @@ TEST(Test1, add_then_remove_one) {
 }
 
 TEST(Test1, add_then_remove_more_then_available) {
-    Level2 l2;
+    Level2Interface l2;
     unsigned long long order_id1 = l2.add_order(3, 223123, 1);
     unsigned long long order_id2 = l2.add_order(5, 1223123, 1);
     unsigned long long order_id3 = l2.add_order(1, 4221, 1);
@@ -62,18 +112,16 @@ TEST(Test1, add_then_remove_more_then_available) {
 }
 
 TEST(Test1, add_multiple_offers_to_one_bucket) {
-    Level2 l2;
+    Level2Interface l2;
     unsigned long long order_id1 = l2.add_order(3, 223123, 1);
     unsigned long long order_id2 = l2.add_order(5, 1223123, 1);
     unsigned long long order_id3 = l2.add_order(1, 4221, 1);
     unsigned long long order_id4 = l2.add_order(4, 223123, 1);
     ASSERT_EQ(l2.get_l2_size(), 13);
-    l2.print_level2_by_idx();
-    l2.print_level2_by_price();
 }
 
 TEST(TEST2, add_ask) {
-    Level2 l2;
+    Level2Interface l2;
     l2.add_order(5, 223, 0);
 }
 
@@ -84,3 +132,5 @@ int main(int argc, char** argv)
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+
+#endif

@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.16)
 message("stocks...")
 project(stocks)
 
-set(HEADERS headers/level2.h)
+set(HEADERS headers/level2HashTableBase.h headers/level2Interface.h headers/level2BinaryTreeBase.h)
 
-set(SOURCES src/level2.cpp)
+set(SOURCES src/level2HashTableBase.cpp src/level2BinaryTreeBase.cpp)
 
 include_directories(
         headers

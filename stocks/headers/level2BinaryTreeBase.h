@@ -1,25 +1,24 @@
 #pragma once
 
-#include <unordered_map>
-#include <queue>
+#include <map>
 #include <vector>
+#include <tuple>
 
+using namespace std;
 
-class Level2 {
+class Level2BinaryTreeBase {
     using Price = uint64_t;     // price in cents but i guess i need to switch to something bigger to remove overflow issue
     using OfferID = uint64_t;   // id of offer. It
     using Count = uint64_t;
+    using Callback = std::function<void()>;
 private:
-    // Price -> offers with this price
-    std::unordered_map<Price, std::vector<std::pair<OfferID, Count>>> bids_;
-
-    std::unordered_map<OfferID, Price> ids;     // order_id -> Price
-
-    uint64_t current_offer_id {};
+    std::map<Price, vector<pair<OfferID, Count>>> bids_{};
+    std::map<Price, vector<pair<OfferID, Count>>> asks_{};
+    uint64_t offer_id {};
 public:
-    Level2();
+    Level2BinaryTreeBase();
 
-    auto add_order(unsigned int quantity, Price price, bool isBid) -> OfferID;
+    auto add_order(int quantity, Price price, bool isBid) -> OfferID;
     bool close_order(unsigned int quantity, OfferID id);
 
 
