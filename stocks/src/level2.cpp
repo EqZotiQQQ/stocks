@@ -89,21 +89,20 @@ bool Level2::get_offers_by_id(OfferID id, std::pair<OfferID, Count>*& offer_id) 
 
 void Level2::print_level2_by_price() {
     printf("print ordered by price:\n");
-    for (const auto &offer: bids_) {
-        for (int i = 0; i < offer.second.size(); i++) {
-            printf("price: [%llu]; bid id: [%llu]; count: [%llu]\n", offer.first, offer.second[i].first, offer.second[i].second);
+    std::map<Price, std::vector<std::pair<OfferID, Count>>> ordered(bids_.begin(), bids_.end());
+    for (auto & it : ordered) {
+        for (auto it2 = it.second.begin(); it2 != it.second.end(); it2++) {
+            printf("Price: [%llu], Offer: [%llu], Count: [%llu]\n", it.first, it2->first, it2->second);
         }
     }
 }
 
 void Level2::print_level2_by_idx() {
     printf("print ordered by indexes:\n");
-
-    std::map<Price, std::vector<std::pair<OfferID, Count>>> ordered(bids_.begin(), bids_.end());
-    for (auto & it : ordered) {
-        for (auto it2 = it.second.begin(); it2 != it.second.end(); it2++) {
-            printf("Price: [%llu], Offer: [%llu], Count: [%llu]\n", it.first, it2->first, it2->second);
-        }
+    for (const auto& id: ids) {
+        std::pair<OfferID, Count>* offer;
+        get_offers_by_id(id.first, offer);
+        printf("id: [%llu], price: [%llu], count: [%llu]\n", id.first, id.second, offer->second);
     }
 }
 
@@ -116,13 +115,6 @@ auto Level2::get_l2_size() -> OfferID {
             size += b.second;
         }
     }
-
-//    for (const auto &ask: asks_) {
-//        auto offer = ask.second;
-//        for (const auto& b: offer) {
-//            size += b.second;
-//        }
-//    }
     return size;
 }
 
