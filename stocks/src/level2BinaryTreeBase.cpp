@@ -28,12 +28,7 @@ auto Level2BinaryTreeBase::add_order(int quantity, Price price, bool isBid) -> O
             }
         }
         if (quantity) {     //  Если остались элементы, то добавляем их в аски
-            auto order = bids_.find(price);
-            if (order != bids_.end()) {
-                bids_.insert({price, {}});
-            }
-            bids_[price].push_back({offer_id, quantity});
-            bids_by_offer_[offer_id] = {price, quantity};
+            add_offer_to(bids_, price, quantity);
         }
     } else { // выставляем на покупку
         while (price >= bids_.begin()->first && !bids_.empty() && quantity) {
@@ -53,16 +48,23 @@ auto Level2BinaryTreeBase::add_order(int quantity, Price price, bool isBid) -> O
             }
         }
         if (quantity) {     //  Если остались элементы, то добавляем их в аски
-            auto order = asks_.find(price);
-            if (order != asks_.end()) {
-                asks_.insert({price, {}});
-            }
-            asks_[price].push_back({offer_id, quantity});
-            asks_by_offer_[offer_id] = {price, quantity};
+            add_offer_to(asks_, price, quantity);
         }
     }
     return ++offer_id;
 }
+
+void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<pair<OfferID, Count>>>& offer,
+                  Price price,
+                  int quantity) {
+    auto order = offer.find(price);
+    if (order != offer.end()) {
+        offer.insert({price, {}});
+    }
+    offer[price].push_back({offer_id, quantity});
+    asks_by_offer_[offer_id] = {price, quantity};
+}
+
 bool Level2BinaryTreeBase::close_order(unsigned int quantity, OfferID id) {
     return true;
 }

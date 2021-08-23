@@ -3,6 +3,7 @@
 #include <map>
 #include <vector>
 #include <tuple>
+#include <functional>
 
 using namespace std;
 
@@ -33,4 +34,11 @@ public:
     void print_level2_by_price();
     void print_level2_by_idx();
     auto get_l2_size() -> OfferID;
+
+private:
+    void add_offer_to(std::map<Price, vector<pair<OfferID, Count>>>& offer,
+                      Price price,
+                      int quantity);
+    void exchange_existing_offers(std::map<Price, vector<pair<OfferID, Count>>>& offer,
+                                  int quantity);
 };
