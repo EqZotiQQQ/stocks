@@ -1,6 +1,9 @@
 #include "level2.h"
 
 #include <iostream>
+#include <functional>
+#include <map>
+#include <numeric>
 
 using Price = uint64_t;     // price in cents but i guess i need to switch to something bigger to remove overflow issue
 using OfferID = uint64_t;   // id of offer. It
@@ -15,6 +18,9 @@ Level2::Level2() {
 auto Level2::add_order(unsigned int quantity, Price price, bool isBid) -> OfferID {
     auto bids = bids_.find(price);
     current_offer_id++; // TODO: Check overflow
+
+
+
     ids.emplace(current_offer_id, price); // Вставить id оффера, чтобы быстро находить offer_id
     bids_[price].emplace_back(current_offer_id, quantity);// Вставить в хранилище баев price -> id, cnt
     return current_offer_id;
@@ -68,12 +74,13 @@ bool Level2::get_offers_by_id(OfferID id, std::pair<OfferID, Count>*& offer_id) 
         std::cout << "no such offer in level2\n";
         return false;
     }
-    for (int i = 0; i < offers->size(); i++) {
-        if (offers->at(i).first == id) {
-            offer_id = &(offers->at(i));
+    for (auto& offer : *offers) {
+        if (offer.first == id) {
+            offer_id = &offer;
+            return true;
         }
     }
-    return true;
+    return false;
 }
 
 
@@ -81,26 +88,22 @@ bool Level2::get_offers_by_id(OfferID id, std::pair<OfferID, Count>*& offer_id) 
 
 
 void Level2::print_level2_by_price() {
-    printf("bids:\n");
+    printf("print ordered by price:\n");
     for (const auto &offer: bids_) {
         for (int i = 0; i < offer.second.size(); i++) {
             printf("price: [%llu]; bid id: [%llu]; count: [%llu]\n", offer.first, offer.second[i].first, offer.second[i].second);
         }
     }
-//    printf("asks:\n");
-//    for (const auto &offer: asks_) {
-//        for (int i = 0; i < offer.second.size(); i++) {
-//            printf("price: [%llu]; bid id: [%llu]; count: [%llu]\n", offer.first, offer.second[i].first, offer.second[i].second);
-//        }
-//    }
 }
 
 void Level2::print_level2_by_idx() {
-    printf("print by indexes:\n");
-    for (const auto& id: ids) {
-        std::pair<OfferID, Count>* offer;
-        get_offers_by_id(id.first, offer);
-        printf("id: [%llu], price: [%llu], count: [%llu]\n", id.first, id.second, offer->second);
+    printf("print ordered by indexes:\n");
+
+    std::map<Price, std::vector<std::pair<OfferID, Count>>> ordered(bids_.begin(), bids_.end());
+    for (auto & it : ordered) {
+        for (auto it2 = it.second.begin(); it2 != it.second.end(); it2++) {
+            printf("Price: [%llu], Offer: [%llu], Count: [%llu]\n", it.first, it2->first, it2->second);
+        }
     }
 }
 

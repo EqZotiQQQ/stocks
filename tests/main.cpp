@@ -27,13 +27,13 @@ TEST(Test1, add_few_offers) {
     ASSERT_EQ(l2.get_l2_size(), 9);
 }
 
-TEST(Test1, remove_one) {
+TEST(Test1, remove_one_from_empty_l2) {
     Level2 l2;
     ASSERT_EQ(l2.get_l2_size(), 0);
     ASSERT_FALSE(l2.close_order(5, 0));
 }
 
-TEST(Test1, add_then_remove_one) {
+TEST(Test1, add_then_remove_all_offer) {
     Level2 l2;
     unsigned long long order_id1 = l2.add_order(3, 223123, 1);
     unsigned long long order_id2 = l2.add_order(5, 1223123, 1);
@@ -43,7 +43,7 @@ TEST(Test1, add_then_remove_one) {
     ASSERT_EQ(l2.get_l2_size(), 4);
 }
 
-TEST(Test1, add_then_remove_all_offer) {
+TEST(Test1, add_then_remove_one) {
     Level2 l2;
     unsigned long long order_id1 = l2.add_order(3, 223123, 1);
     unsigned long long order_id2 = l2.add_order(5, 1223123, 1);
@@ -59,6 +59,8 @@ TEST(Test1, add_then_remove_more_then_available) {
     unsigned long long order_id3 = l2.add_order(1, 4221, 1);
     ASSERT_FALSE(l2.close_order(12, order_id2));
     ASSERT_EQ(l2.get_l2_size(), 9);
+    l2.print_level2_by_idx();
+    l2.print_level2_by_price();
 }
 
 TEST(TEST2, add_ask) {
