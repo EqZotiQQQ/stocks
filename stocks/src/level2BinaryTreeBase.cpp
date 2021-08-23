@@ -8,14 +8,29 @@ Level2BinaryTreeBase::Level2BinaryTreeBase() {
 auto Level2BinaryTreeBase::add_order(int quantity, Price price, bool isBid) -> OfferID {
     if (isBid) {    // выставляем на продажу
         while (price <= asks_.begin()->first && !asks_.empty() && quantity) {
-            std::cout << "??\n";
-            break;
+            int r = asks_.begin()->second.begin()->second - quantity;
+            if (r > 0) {            // Количество добавляемых акций больше, чем мапа на продажу
+                asks_.begin()->second.begin()->second -= quantity;
+                quantity = 0;
+            } else if (r < 0) {     // Кол-во удаляемых меньше, чем в мапе на продажу
+                quantity -= asks_.begin()->second.begin()->second;
+                asks_.begin()->second.erase(asks_.begin()->second.begin());
+            } else {                // столько же сколько в мапе на продажу
+                asks_.begin()->second.erase(asks_.begin()->second.begin());
+                quantity = 0;
+            }
+            if (asks_.begin()->second.empty()) {    // Если для цены нет больше офферов - убрать бид
+                asks_.erase(asks_.begin());
+            }
         }
-        auto order = bids_.find(price);
-        if (order != bids_.end()) {
-            bids_.insert({price, {}});
+        if (quantity) {     //  Если остались элементы, то добавляем их в аски
+            auto order = bids_.find(price);
+            if (order != bids_.end()) {
+                bids_.insert({price, {}});
+            }
+            bids_[price].push_back({offer_id, quantity});
         }
-        bids_[price].push_back({offer_id, quantity});
+
     } else { // выставляем на покупку
         while (price >= bids_.begin()->first && !bids_.empty() && quantity) {
             int r = bids_.begin()->second.begin()->second - quantity;
@@ -59,22 +74,12 @@ void Level2BinaryTreeBase::print_level2_by_price() {
             printf("Price [%llu]; ID: [%llu]; Count: [%llu]\n", bid->first, offer.first, offer.second);
         }
     }
-//    for (auto bid: bids_) {
-//        for (auto offer: bid.second) {
-//            printf("Price [%llu]; ID: [%llu]; Count: [%llu]\n", bid.first, offer.first, offer.second);
-//        }
-//    }
     printf("==============\nAsks:\n");
     for (auto ask = asks_.rbegin(); ask != asks_.rend(); ask++) {
         for (auto offer: ask->second) {
             printf("Price [%llu]; ID: [%llu]; Count: [%llu]\n", ask->first, offer.first, offer.second);
         }
     }
-//    for (auto bid: asks_) {
-//        for (auto offer: bid.second) {
-//            printf("Price [%llu]; ID: [%llu]; Count: [%llu]\n", bid.first, offer.first, offer.second);
-//        }
-//    }
 }
 void Level2BinaryTreeBase::print_level2_by_idx() {
 

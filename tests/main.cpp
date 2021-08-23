@@ -10,7 +10,7 @@ void t1() {
     l2.add_order(2, 25, 1);
     l2.add_order(5, 72, 1);
     l2.add_order(1, 72, 1);
-//    l2.print_level2_by_price();
+    l2.print_level2_by_price();
 }
 void t2() {
     print
@@ -29,7 +29,7 @@ void t3() {
     l2.add_order(10, 25, 1);
     l2.add_order(10, 72, 1);
     l2.add_order(11, 35, 0);
-//    l2.print_level2_by_price();
+    l2.print_level2_by_price();
 }
 void t4() {
     print
@@ -40,11 +40,37 @@ void t4() {
     l2.add_order(11, 65, 0);
     l2.print_level2_by_price();
 }
+void t5() {
+    print
+    Level2Interface l2;
+    l2.add_order(10, 50, 1);
+    l2.add_order(10, 25, 1);
+    l2.add_order(10, 72, 1);
+    l2.add_order(110, 80, 0);
+    l2.print_level2_by_price();
+}
+void t6() {
+    print
+    Level2Interface l2;
+    l2.add_order(10, 50, 1);
+    l2.add_order(10, 25, 1);
+    l2.add_order(10, 72, 1);
+    l2.add_order(110, 80, 0);
+    l2.add_order(30, 90, 1);
+    l2.add_order(40, 30, 1);
+    l2.add_order(30, 90, 0);
+    l2.add_order(40, 80, 1);
+    l2.print_level2_by_price();
+}
 
 int main() {
 //    t1();
 //    t2();
-    t4();
+//    t3();
+//    t4();
+//    t5();
+//    t6();
+
     return 0;
 }
 
