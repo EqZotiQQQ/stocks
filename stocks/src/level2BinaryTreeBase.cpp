@@ -8,44 +8,14 @@ Level2BinaryTreeBase::Level2BinaryTreeBase() {
 auto Level2BinaryTreeBase::add_order(int quantity, Price price, bool isBid) -> OfferID {
     if (isBid) {    // выставляем на продажу
         while (price <= asks_.begin()->first && !asks_.empty() && quantity) {
-            int r = asks_.begin()->second.begin()->second - quantity;
-            if (r > 0) {            // Количество добавляемых акций больше, чем мапа на продажу
-                asks_.begin()->second.begin()->second -= quantity;
-                std::size_t id = asks_.begin()->second.begin()->first;  // Сохранить id для передачи его в sort by idx
-                asks_by_offer_[id].second -= quantity;
-                quantity = 0;
-            } else if (r < 0) {     // Кол-во удаляемых меньше, чем в мапе на продажу
-                quantity -= asks_.begin()->second.begin()->second;
-                asks_.begin()->second.erase(asks_.begin()->second.begin());
-            } else {                // столько же сколько в мапе на продажу
-                asks_.begin()->second.erase(asks_.begin()->second.begin());
-                std::size_t id = asks_.begin()->second.begin()->first;  // Сохранить id для передачи его в sort by idx
-                asks_by_offer_[id].second -= quantity;
-                quantity = 0;
-            }
-            if (asks_.begin()->second.empty()) {    // Если для цены нет больше офферов - убрать бид
-                asks_.erase(asks_.begin());
-            }
+            exchange_existing_offers(asks_, quantity);
         }
         if (quantity) {     //  Если остались элементы, то добавляем их в аски
             add_offer_to(bids_, price, quantity);
         }
     } else { // выставляем на покупку
         while (price >= bids_.begin()->first && !bids_.empty() && quantity) {
-            int r = bids_.begin()->second.begin()->second - quantity;
-            if (r > 0) {            // Количество удаляемых акций меньше, чем мапа
-                bids_.begin()->second.begin()->second -= quantity;
-                quantity = 0;
-            } else if (r < 0) {     // Кол-во удаляемых больше, чем в мапе
-                quantity -= bids_.begin()->second.begin()->second;
-                bids_.begin()->second.erase(bids_.begin()->second.begin());
-            } else {                // столько же сколько в мапе
-                bids_.begin()->second.erase(bids_.begin()->second.begin());
-                quantity = 0;
-            }
-            if (bids_.begin()->second.empty()) {    // Если для цены нет больше офферов - убрать бид
-                bids_.erase(bids_.begin());
-            }
+            exchange_existing_offers(bids_, quantity);
         }
         if (quantity) {     //  Если остались элементы, то добавляем их в аски
             add_offer_to(asks_, price, quantity);
@@ -65,7 +35,7 @@ void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<pair<OfferID, Cou
 }
 
 void Level2BinaryTreeBase::exchange_existing_offers(std::map<Price, vector<pair<OfferID, Count>>>& offer,
-                                                    int quantity) {
+                                                    int& quantity) {
     int r = offer.begin()->second.begin()->second - quantity;
     if (r > 0) {            // Количество удаляемых акций меньше, чем мапа
         offer.begin()->second.begin()->second -= quantity;
@@ -80,6 +50,7 @@ void Level2BinaryTreeBase::exchange_existing_offers(std::map<Price, vector<pair<
     if (offer.begin()->second.empty()) {    // Если для цены нет больше офферов - убрать бид
         offer.erase(offer.begin());
     }
+
 }
 bool Level2BinaryTreeBase::close_order(unsigned int quantity, OfferID id) {
     return true;

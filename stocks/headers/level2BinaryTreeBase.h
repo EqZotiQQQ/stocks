@@ -36,9 +36,24 @@ public:
     auto get_l2_size() -> OfferID;
 
 private:
+    /**
+     * В этом методе ask или bid добавляется в стаккан. Если оффера по такой цене
+     * ещё небыло, то создаётся новый ключ, если такой оффер уже был - то оффер
+     * добавляется в вектор
+     * @param offer - это bid или ask
+     * @param price - цена сделки
+     * @param quantity - количество акций в оффере.
+     */
     void add_offer_to(std::map<Price, vector<pair<OfferID, Count>>>& offer,
                       Price price,
                       int quantity);
+
+    /**
+     * В этом методе обрабатывается ситуация, когда выставляется ask или bid,
+     * когда ask выше по цене, чем bid или наоборот, bid меньше по цене чем ask.
+     * @param offer - это bid или ask
+     * @param quantity - количество акций в оффере.
+     */
     void exchange_existing_offers(std::map<Price, vector<pair<OfferID, Count>>>& offer,
-                                  int quantity);
+                                  int& quantity);
 };
