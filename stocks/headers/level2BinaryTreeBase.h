@@ -28,12 +28,12 @@ public:
 
 
     bool get_offers_by_price(Price price, std::vector<std::pair<OfferID, Count>>*& vec);
-    bool get_offers_by_id(OfferID id, std::pair<OfferID, Count>*& offer_id);
+    bool get_offers_by_id(OfferID id, std::pair<Price, Count>*& offer);
 
 
     void print_level2_by_price();
     void print_level2_by_idx();
-    auto get_l2_size() -> OfferID;
+    Count get_l2_size();
 
 private:
     /**
