@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <queue>
 #include <vector>
+#include <cstdint>
 
 
 class Level2HashTableBase {

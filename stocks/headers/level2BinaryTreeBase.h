@@ -4,6 +4,7 @@
 #include <vector>
 #include <tuple>
 #include <functional>
+#include <cstdint>
 
 using namespace std;
 
@@ -28,7 +29,10 @@ public:
 
 
     bool get_offers_by_price(Price price, std::vector<std::pair<OfferID, Count>>*& vec);
+    auto get_offers_by_price(Price price) -> std::vector<std::pair<OfferID, Count>>;
+
     bool get_offers_by_id(OfferID id, std::pair<Price, Count>*& offer);
+    auto get_offers_by_id(OfferID id) -> std::pair<Price, Count>;
 
 
     void print_level2_by_price();

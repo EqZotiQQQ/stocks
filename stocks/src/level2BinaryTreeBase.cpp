@@ -137,6 +137,20 @@ bool Level2BinaryTreeBase::get_offers_by_price(Price price, std::vector<std::pai
     return true;
 }
 
+auto Level2BinaryTreeBase::get_offers_by_price(Price price) -> std::vector<std::pair<OfferID, Count>> {
+    auto bid_offer = bids_.find(price);
+    auto ask_offer = asks_.find(price);
+    std::vector<std::pair<OfferID, Count>> ret {};
+    if (bid_offer != bids_.end()) {
+        ret.assign(bid_offer->second.begin(), bid_offer->second.end());
+    } else if (ask_offer != asks_.end()) {
+        ret.assign(ask_offer->second.begin(), ask_offer->second.end());
+    } else {
+        printf("No offers for [%lu] price\n", price);
+    }
+    return ret;
+}
+
 bool Level2BinaryTreeBase::get_offers_by_id(OfferID id, std::pair<Price, Count>*& offer) {
     auto bid_offer = bids_by_offer_.find(id)->second;
     auto ask_offer = asks_by_offer_.find(id)->second;
@@ -149,6 +163,22 @@ bool Level2BinaryTreeBase::get_offers_by_id(OfferID id, std::pair<Price, Count>*
         return false;
     }
     return true;
+}
+
+auto Level2BinaryTreeBase::get_offers_by_id(OfferID id) -> std::pair<Price, Count> {
+    auto bid_offer = bids_by_offer_.find(id)->second;
+    auto ask_offer = asks_by_offer_.find(id)->second;
+    std::pair<Price, Count> ret {};
+    if (bid_offer != bids_by_offer_.end()->second) {
+        ret.first = bid_offer.first;
+        ret.second = bid_offer.second;
+    } else if (ask_offer != asks_by_offer_.end()->second) {
+        ret.first = ask_offer.first;
+        ret.second = ask_offer.second;
+    } else {
+        printf("No offer for [%llu] id\n", offer_id);
+    }
+    return ret;
 }
 
 void Level2BinaryTreeBase::print_level2_by_price() {
