@@ -11,3 +11,5 @@ include_directories(
 )
 
 add_library(stocks STATIC ${HEADERS} ${SOURCES})
+
+target_link_libraries(stocks PRIVATE nlohmann_json::nlohmann_json)

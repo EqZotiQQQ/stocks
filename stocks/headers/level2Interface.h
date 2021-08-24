@@ -41,4 +41,12 @@ public:
     auto get_l2_size() -> OfferID {
         return l2.get_l2_size();
     }
+
+    bool store() {
+        return l2.store();
+    }
+
+    bool load() {
+        return l2.load();
+    }
 };

@@ -5,7 +5,8 @@ project(stocks)
 set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty)   # include additional tools
-include(utils)  # execute this .cmake. It contains google tests.
+include(gtests)  # execute this .cmake. It contains google tests.
+include(json)  # execute this .cmake. It contains google tests.
 
 add_subdirectory(stocks)
 

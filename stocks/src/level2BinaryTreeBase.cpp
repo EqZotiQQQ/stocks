@@ -1,7 +1,8 @@
 #include "level2BinaryTreeBase.h"
 
 #include <iostream>
-#include <numeric>
+#include <nlohmann/json.hpp>
+#include <fstream>
 
 using Price = uint64_t;     // price in cents but i guess i need to switch to something bigger to remove overflow issue
 using OfferID = uint64_t;   // id of offer. It
@@ -173,4 +174,27 @@ Count Level2BinaryTreeBase::get_l2_size() {
         l2_size += i.second.second;
     }
     return l2_size;
+}
+
+bool Level2BinaryTreeBase::store() {
+    //std::ifstream i("file.json");
+    nlohmann::json j;
+    for (auto iter = bids_.begin(); iter != bids_.end(); iter++) {
+        Count total_count{};
+        for (auto i: iter->second) {
+            total_count += i.second;
+        }
+        //cout << "total count for " << iter->first << " is " << total_count << "\n";
+        nlohmann::json t;
+        t["bids"]["price"] = iter->first;
+        t["bids"]["quantity"] = total_count;
+        j += t;
+    }
+    std::cout << j.dump();
+    //i >> j;
+    return true;
+}
+
+bool Level2BinaryTreeBase::load() {
+    return true;
 }

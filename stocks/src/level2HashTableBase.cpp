@@ -3,7 +3,7 @@
 #include <iostream>
 #include <functional>
 #include <map>
-#include <numeric>
+#include <nlohmann/json.hpp>
 
 using Price = uint64_t;     // price in cents but i guess i need to switch to something bigger to remove overflow issue
 using OfferID = uint64_t;   // id of offer. It
@@ -82,10 +82,6 @@ bool Level2HashTableBase::get_offers_by_id(OfferID id, std::pair<OfferID, Count>
     }
     return false;
 }
-
-
-
-
 
 void Level2HashTableBase::print_level2_by_price() {
     printf("print ordered by price:\n");

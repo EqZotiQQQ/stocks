@@ -34,6 +34,9 @@ public:
     void print_level2_by_idx();
     Count get_l2_size();
 
+    bool store();
+    bool load();
+
 private:
     /**
      * В этом методе ask или bid добавляется в стаккан. Если оффера по такой цене
