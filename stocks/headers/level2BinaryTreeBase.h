@@ -57,4 +57,17 @@ private:
     void exchange_existing_offers(std::map<Price, vector<pair<OfferID, Count>>>& offer,
                                   std::map<OfferID, pair<Price, Count>>& offer_by_id,
                                   int& quantity);
+
+    /**
+     *
+     * @param bid_ask_orders - это bid или ask, отсортированные по цене
+     * @param offer_by_id - это bid или ask, отсортированные по id
+     * @param quantity - количество акций, которые надо отменить
+     * @param id - id оффера
+     * @return возвращает успех операции
+     */
+    static bool close_order_support(std::map<Price, vector<pair<OfferID, Count>>>& bid_ask_orders,
+                                    std::map<OfferID, pair<Price, Count>>& offer_by_id,
+                                    int quantity,
+                                    int id);
 };

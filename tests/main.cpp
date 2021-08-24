@@ -9,9 +9,8 @@ using OfferID = uint64_t;   // id of offer. It
 using Count = uint64_t;
 using Callback = std::function<void()>;
 
-constexpr int print_type{2};
+constexpr int print_type{3};
 
-#define print std::cout << __FUNCTION__ <<std::endl;
 TEST(Test1, create_level2_and_add_some_orders_with_same_prices) {
     Level2Interface l2;
     l2.add_order(4, 50, 1);
@@ -26,6 +25,7 @@ TEST(Test1, create_level2_and_add_some_orders_with_same_prices) {
         case 2: l2.print_level2_by_idx(); break;
     }
 }
+
 TEST(Test1, add_bids_then_add_asks1) {
     Level2Interface l2;
     l2.add_order(10, 50, 1);
@@ -41,6 +41,7 @@ TEST(Test1, add_bids_then_add_asks1) {
         case 2: l2.print_level2_by_idx(); break;
     }
 }
+
 TEST(Test1, add_bids_then_add_asks2) {
     Level2Interface l2;
     l2.add_order(10, 50, 1);
@@ -57,6 +58,7 @@ TEST(Test1, add_bids_then_add_asks2) {
         case 2: l2.print_level2_by_idx(); break;
     }
 }
+
 TEST(Test1, add_bids_then_add_asks3) {
     Level2Interface l2;
     l2.add_order(10, 50, 1);
@@ -71,6 +73,7 @@ TEST(Test1, add_bids_then_add_asks3) {
         case 2: l2.print_level2_by_idx(); break;
     }
 }
+
 TEST(Test1, add_bids_then_add_asks4) {
     Level2Interface l2;
     l2.add_order(10, 50, 1);
@@ -83,6 +86,7 @@ TEST(Test1, add_bids_then_add_asks4) {
         case 2: l2.print_level2_by_idx(); break;
     }
 }
+
 TEST(Test1, add_bids_then_add_asks5) {
     Level2Interface l2;
     l2.add_order(10, 50, 1);
@@ -110,6 +114,7 @@ TEST(Test2, close_order1) {
         case 2: l2.print_level2_by_idx(); break;
     }
 }
+
 TEST(Test2, close_order2) {
     Level2Interface l2;
     l2.add_order(10, 50, 1);

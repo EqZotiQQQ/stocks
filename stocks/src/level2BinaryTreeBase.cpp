@@ -73,54 +73,39 @@ void Level2BinaryTreeBase::exchange_existing_offers(std::map<Price, vector<pair<
     }
 }
 
-bool Level2BinaryTreeBase::close_order(unsigned int quantity, OfferID id) {
-    auto bid_offer = bids_by_offer_.find(id);
-    auto ask_offer = asks_by_offer_.find(id);
-    if (bid_offer != bids_by_offer_.end()) {
-        if (quantity <= bid_offer->second.second) {
-            bids_by_offer_[id].second -= quantity;
+bool Level2BinaryTreeBase::close_order_support(std::map<Price, vector<pair<OfferID, Count>>>& bid_ask_orders,
+                                               std::map<OfferID, pair<Price, Count>>& offer_by_id,
+                                               int quantity,
+                                               int id) {
+    auto offer = offer_by_id.find(id);
+    if (offer != offer_by_id.end()) {
+        if (quantity <= offer->second.second) {
+            offer_by_id[id].second -= quantity;
 
-            for (int i = 0; i < bids_[bids_by_offer_[id].first].size(); i++) {
-                if (bids_[bids_by_offer_[id].first].at(i).first == id) {
-                    bids_[bids_by_offer_[id].first].at(i).second -= quantity;
-                    if (bids_[bids_by_offer_[id].first].at(i).second == 0) {
-                        bids_[bids_by_offer_[id].first].erase(bids_[bids_by_offer_[id].first].begin() + i);
+            for (int i = 0; i < bid_ask_orders[offer_by_id[id].first].size(); i++) {
+                if (bid_ask_orders[offer_by_id[id].first].at(i).first == id) {
+                    bid_ask_orders[offer_by_id[id].first].at(i).second -= quantity;
+                    if (bid_ask_orders[offer_by_id[id].first].at(i).second == 0) {
+                        bid_ask_orders[offer_by_id[id].first].erase(bid_ask_orders[offer_by_id[id].first].begin() + i);
                     }
                 }
             }
 
-            if (bids_by_offer_[id].second == 0) {
-                bids_by_offer_.erase(id);
+            if (offer_by_id[id].second == 0) {
+                offer_by_id.erase(id);
             }
 
             return true;
         } else {
-            printf("Incorrect quantity for close order: [%lu] while [%lu] available.\n", quantity, bid_offer->second.second);
+            printf("Incorrect quantity for close order: [%lu] while [%lu] available.\n", quantity, offer->second.second);
         }
-    } else if (ask_offer != asks_by_offer_.end()) {
-        if (quantity <= ask_offer->second.second) {
-            asks_by_offer_[id].second -= quantity;
-
-            for (int i = 0; i < asks_[asks_by_offer_[id].first].size(); i++) {
-                if (asks_[asks_by_offer_[id].first].at(i).first == id) {
-                    asks_[asks_by_offer_[id].first].at(i).second -= quantity;
-                    if (asks_[asks_by_offer_[id].first].at(i).second == 0) {
-                        asks_[asks_by_offer_[id].first].erase(asks_[asks_by_offer_[id].first].begin() + i);
-                    }
-                }
-            }
-
-            if (asks_by_offer_[id].second == 0) {
-                asks_by_offer_.erase(id);
-            }
-            return true;
-        } else {
-            printf("Incorrect quantity for close order: [%lu] while [%lu] available.\n", quantity, bid_offer->second.second);
-        }
-    } else {
-        printf("No offer for [%lu] id\n", id);
     }
     return false;
+}
+
+bool Level2BinaryTreeBase::close_order(unsigned int quantity, OfferID id) {
+    return Level2BinaryTreeBase::close_order_support(bids_, bids_by_offer_, quantity, id)
+        || Level2BinaryTreeBase::close_order_support(asks_, asks_by_offer_, quantity, id);
 }
 
 auto Level2BinaryTreeBase::get_offers_by_price(Price price) -> std::vector<std::pair<OfferID, Count>> {
