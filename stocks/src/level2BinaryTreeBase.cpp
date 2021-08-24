@@ -12,7 +12,7 @@ Level2BinaryTreeBase::Level2BinaryTreeBase() {
 
 }
 
-auto Level2BinaryTreeBase::add_order(int quantity, Price price, bool isBid) -> OfferID {
+OfferID Level2BinaryTreeBase::add_order(int quantity, Price price, bool isBid) {
     if (isBid) {    // выставляем на продажу
         while (price <= asks_.begin()->first && !asks_.empty() && quantity) {
             exchange_existing_offers(asks_, asks_by_offer_, quantity);
@@ -123,20 +123,6 @@ bool Level2BinaryTreeBase::close_order(unsigned int quantity, OfferID id) {
     return false;
 }
 
-bool Level2BinaryTreeBase::get_offers_by_price(Price price, std::vector<std::pair<OfferID, Count>>*& vec) {
-    auto bid_offer = bids_.find(price);
-    auto ask_offer = asks_.find(price);
-    if (bid_offer != bids_.end()) {
-        vec = &bid_offer->second;
-    } else if (ask_offer != asks_.end()) {
-        vec = &ask_offer->second;
-    } else {
-        printf("No offers for [%lu] price\n", price);
-        return false;
-    }
-    return true;
-}
-
 auto Level2BinaryTreeBase::get_offers_by_price(Price price) -> std::vector<std::pair<OfferID, Count>> {
     auto bid_offer = bids_.find(price);
     auto ask_offer = asks_.find(price);
@@ -149,20 +135,6 @@ auto Level2BinaryTreeBase::get_offers_by_price(Price price) -> std::vector<std::
         printf("No offers for [%lu] price\n", price);
     }
     return ret;
-}
-
-bool Level2BinaryTreeBase::get_offers_by_id(OfferID id, std::pair<Price, Count>*& offer) {
-    auto bid_offer = bids_by_offer_.find(id)->second;
-    auto ask_offer = asks_by_offer_.find(id)->second;
-    if (bid_offer != bids_by_offer_.end()->second) {
-        offer = &bid_offer;
-    } else if (ask_offer != asks_by_offer_.end()->second) {
-        offer = &ask_offer;
-    } else {
-        printf("No offer for [%llu] id\n", offer_id);
-        return false;
-    }
-    return true;
 }
 
 auto Level2BinaryTreeBase::get_offers_by_id(OfferID id) -> std::pair<Price, Count> {

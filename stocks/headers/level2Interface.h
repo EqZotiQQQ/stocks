@@ -14,7 +14,7 @@ class Level2Interface {
 private:
     level2 l2;
 public:
-    auto add_order(unsigned int quantity, Price price, bool is_bid) -> OfferID {
+    OfferID add_order(unsigned int quantity, Price price, bool is_bid) {
         return l2.add_order(quantity, price, is_bid);
     }
 
@@ -22,16 +22,8 @@ public:
         return l2.close_order(quantity, id);
     }
 
-    bool get_offers_by_price(Price price, std::vector<std::pair<OfferID, Count>>*& vec) {
-        return l2.get_offers_by_price(price, vec);
-    }
-
     auto get_offers_by_price(Price price) -> std::vector<std::pair<OfferID, Count>> {
         return l2.get_offers_by_price(price);
-    }
-
-    bool get_offers_by_id(OfferID id, std::pair<OfferID, Count>*& offer_id) {
-        return l2.get_offers_by_id(id, offer_id);
     }
 
     auto get_offers_by_id(OfferID id) -> std::pair<OfferID, Count> {
