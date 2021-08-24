@@ -45,6 +45,7 @@ private:
      * @param quantity - количество акций в оффере.
      */
     void add_offer_to(std::map<Price, vector<pair<OfferID, Count>>>& offer,
+                      std::map<OfferID, pair<Price, Count>>& offer_by_id,
                       Price price,
                       int quantity);
 
@@ -55,5 +56,6 @@ private:
      * @param quantity - количество акций в оффере.
      */
     void exchange_existing_offers(std::map<Price, vector<pair<OfferID, Count>>>& offer,
+                                  std::map<OfferID, pair<Price, Count>>& offer_by_id,
                                   int& quantity);
 };

@@ -8,49 +8,62 @@ Level2BinaryTreeBase::Level2BinaryTreeBase() {
 auto Level2BinaryTreeBase::add_order(int quantity, Price price, bool isBid) -> OfferID {
     if (isBid) {    // выставляем на продажу
         while (price <= asks_.begin()->first && !asks_.empty() && quantity) {
-            exchange_existing_offers(asks_, quantity);
+            exchange_existing_offers(asks_, asks_by_offer_, quantity);
         }
         if (quantity) {     //  Если остались элементы, то добавляем их в аски
-            add_offer_to(bids_, price, quantity);
+            add_offer_to(bids_, bids_by_offer_, price, quantity);
         }
     } else { // выставляем на покупку
         while (price >= bids_.begin()->first && !bids_.empty() && quantity) {
-            exchange_existing_offers(bids_, quantity);
+            exchange_existing_offers(bids_, bids_by_offer_, quantity);
         }
         if (quantity) {     //  Если остались элементы, то добавляем их в аски
-            add_offer_to(asks_, price, quantity);
+            add_offer_to(asks_, asks_by_offer_, price, quantity);
         }
     }
     return ++offer_id;
 }
 
 void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<pair<OfferID, Count>>>& offer,
-                  Price price,
-                  int quantity) {
+                                        std::map<OfferID, pair<Price, Count>>& offer_by_id,
+                                        Price price,
+                                        int quantity) {
     auto order = offer.find(price);
     if (order != offer.end()) {
         offer.insert({price, {}});
     }
     offer[price].push_back({offer_id, quantity});
+    offer_by_id.insert({offer_id, {price, quantity}});
 }
 
 void Level2BinaryTreeBase::exchange_existing_offers(std::map<Price, vector<pair<OfferID, Count>>>& offer,
+                                                    std::map<OfferID, pair<Price, Count>>& offer_by_id,
                                                     int& quantity) {
     int r = offer.begin()->second.begin()->second - quantity;
     if (r > 0) {            // Количество удаляемых акций меньше, чем мапа
+        OfferID offers_id = offer_by_id.find(offer.begin()->second.begin()->first)->first;
+        offer_by_id[offers_id].second -= quantity;
+
         offer.begin()->second.begin()->second -= quantity;
         quantity = 0;
+
     } else if (r < 0) {     // Кол-во удаляемых больше, чем в мапе
+        OfferID offers_id = offer_by_id.find(offer.begin()->second.begin()->first)->first;
+        offer_by_id.erase(offers_id);
+
         quantity -= offer.begin()->second.begin()->second;
         offer.begin()->second.erase(offer.begin()->second.begin());
+
     } else {                // столько же сколько в мапе
+        OfferID offers_id = offer_by_id.find(offer.begin()->second.begin()->first)->first;
+        offer_by_id.erase(offers_id);
+
         offer.begin()->second.erase(offer.begin()->second.begin());
         quantity = 0;
     }
     if (offer.begin()->second.empty()) {    // Если для цены нет больше офферов - убрать бид
         offer.erase(offer.begin());
     }
-
 }
 bool Level2BinaryTreeBase::close_order(unsigned int quantity, OfferID id) {
     return true;
