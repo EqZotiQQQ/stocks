@@ -11,6 +11,8 @@
 
 using namespace std;
 
+enum class OFFER {BID, ASK};
+
 class Level2BinaryTreeBase {
     using Price = uint64_t;     // price in cents but i guess i need to switch to something bigger to remove overflow issue
     using OfferID = uint64_t;   // id of offer. It
@@ -27,8 +29,8 @@ private:
 public:
     Level2BinaryTreeBase() noexcept;
 
-    OfferID add_order(Count quantity, Price price, bool isBid) noexcept;
-    bool close_order(unsigned int quantity, OfferID id) noexcept;
+    OfferID add_order(Count quantity, Price price, OFFER offer_type) noexcept;
+    bool close_order(Count quantity, OfferID id) noexcept;
 
     auto get_offers_by_price(Price price) const noexcept -> std::vector<std::pair<OfferID, Count>>;
     auto get_offers_by_id(OfferID id) const noexcept -> std::pair<Price, Count>;
@@ -41,6 +43,8 @@ public:
     bool load() noexcept;
 
 private:
+    OfferID add_bid(Count quantity, Price price) noexcept;
+    OfferID add_ask(Count quantity, Price price) noexcept;
     /**
      * В этом методе ask или bid добавляется в стаккан. Если оффера по такой цене
      * ещё небыло, то создаётся новый ключ, если такой оффер уже был - то оффер
@@ -63,6 +67,8 @@ private:
      */
     void exchange_existing_offers(std::map<Price, vector<pair<OfferID, Count>>>& offer,
                                   std::map<OfferID, pair<Price, Count>>& offer_by_id,
+                                  OFFER offer_type,
+                                  Price price,
                                   Count& quantity) noexcept;
 
     /**

@@ -14,8 +14,8 @@ class Level2Interface {
 private:
     level2 l2;
 public:
-    OfferID add_order(unsigned int quantity, Price price, bool is_bid) {
-        return l2.add_order(quantity, price, is_bid);
+    OfferID add_order(unsigned int quantity, Price price, OFFER offer_type) {
+        return l2.add_order(quantity, price, offer_type);
     }
 
     bool close_order(unsigned int quantity, OfferID id) {

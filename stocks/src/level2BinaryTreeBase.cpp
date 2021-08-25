@@ -15,18 +15,14 @@ Level2BinaryTreeBase::Level2BinaryTreeBase() noexcept {
 
 }
 
-OfferID Level2BinaryTreeBase::add_order(Count quantity, Price price, bool isBid) noexcept {
-    if (isBid) {    // выставляем на продажу
-        while (price <= asks_.begin()->first && !asks_.empty() && quantity) {
-            exchange_existing_offers(asks_, asks_by_offer_, quantity);
-        }
+OfferID Level2BinaryTreeBase::add_order(Count quantity, Price price, OFFER offer_type) noexcept {
+    if (offer_type == OFFER::BID) {    // выставляем на продажу
+        exchange_existing_offers(asks_, asks_by_offer_, offer_type, price, quantity);
         if (quantity) {     //  Если остались элементы, то добавляем их в аски
             add_offer_to(bids_, bids_by_offer_, price, quantity, offer_id);
         }
     } else { // выставляем на покупку
-        while (price >= bids_.begin()->first && !bids_.empty() && quantity) {
-            exchange_existing_offers(bids_, bids_by_offer_, quantity);
-        }
+        exchange_existing_offers(bids_, bids_by_offer_, offer_type, price, quantity);
         if (quantity) {     //  Если остались элементы, то добавляем их в аски
             add_offer_to(asks_, asks_by_offer_, price, quantity, offer_id);
         }
@@ -49,31 +45,48 @@ void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<pair<OfferID, Cou
 
 void Level2BinaryTreeBase::exchange_existing_offers(std::map<Price, vector<pair<OfferID, Count>>>& offer,
                                                     std::map<OfferID, pair<Price, Count>>& offer_by_id,
+                                                    OFFER offer_type,
+                                                    Price price,
                                                     Count& quantity) noexcept {
-    int r = offer.begin()->second.begin()->second - quantity;
-    if (r > 0) {            // Количество удаляемых акций меньше, чем мапа
-        OfferID offers_id = offer_by_id.find(offer.begin()->second.begin()->first)->first;
-        offer_by_id[offers_id].second -= quantity;
-
-        offer.begin()->second.begin()->second -= quantity;
-        quantity = 0;
-
-    } else if (r < 0) {     // Кол-во удаляемых больше, чем в мапе
-        OfferID offers_id = offer_by_id.find(offer.begin()->second.begin()->first)->first;
-        offer_by_id.erase(offers_id);
-
-        quantity -= offer.begin()->second.begin()->second;
-        offer.begin()->second.erase(offer.begin()->second.begin());
-
-    } else {                // столько же сколько в мапе
-        OfferID offers_id = offer_by_id.find(offer.begin()->second.begin()->first)->first;
-        offer_by_id.erase(offers_id);
-
-        offer.begin()->second.erase(offer.begin()->second.begin());
-        quantity = 0;
+    bool ret;
+    if (offer_type == OFFER::BID) {
+        ret = price <= offer.begin()->first;
+    } else {
+        ret = price >= offer.begin()->first;
     }
-    if (offer.begin()->second.empty()) {    // Если для цены нет больше офферов - убрать бид
-        offer.erase(offer.begin());
+    while (!offer.empty() && ret && quantity) {
+        auto existing_offer_count_by_price = offer_by_id.find(offer.begin()->second.front().first)->first;
+        int r = offer.begin()->second.front().second - quantity;   // TODO: change int to long long or use for overflow add
+
+        if (r > 0) {            // Количество удаляемых акций меньше, чем мапа
+            OfferID offers_id = existing_offer_count_by_price;
+            offer_by_id[offers_id].second -= quantity;
+
+            offer.begin()->second.front().second -= quantity;
+            quantity = 0;
+
+        } else if (r < 0) {     // Кол-во удаляемых больше, чем в мапе
+            OfferID offers_id = existing_offer_count_by_price;
+            offer_by_id.erase(offers_id);
+
+            quantity -= offer.begin()->second.front().second;
+            offer.begin()->second.erase(offer.begin()->second.begin());
+
+        } else {                // столько же сколько в мапе
+            OfferID offers_id = existing_offer_count_by_price;
+            offer_by_id.erase(offers_id);
+
+            offer.begin()->second.erase(offer.begin()->second.begin());
+            quantity = 0;
+        }
+        if (offer.begin()->second.empty()) {    // Если для цены нет больше офферов - убрать бид
+            offer.erase(offer.begin());
+        }
+        if (offer_type == OFFER::BID) {
+            ret = price <= offer.begin()->first;
+        } else {
+            ret = price >= offer.begin()->first;
+        }
     }
 }
 
@@ -107,7 +120,7 @@ bool Level2BinaryTreeBase::close_order_support(std::map<Price, vector<pair<Offer
     return false;
 }
 
-bool Level2BinaryTreeBase::close_order(unsigned int quantity, OfferID id) noexcept {
+bool Level2BinaryTreeBase::close_order(Count quantity, OfferID id) noexcept {
     return Level2BinaryTreeBase::close_order_support(bids_, bids_by_offer_, quantity, id)
         || Level2BinaryTreeBase::close_order_support(asks_, asks_by_offer_, quantity, id);
 }
