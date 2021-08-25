@@ -25,20 +25,20 @@ private:
 
     uint64_t offer_id {};
 public:
-    Level2BinaryTreeBase();
+    Level2BinaryTreeBase() noexcept;
 
-    OfferID add_order(Count quantity, Price price, bool isBid);
-    bool close_order(unsigned int quantity, OfferID id);
+    OfferID add_order(Count quantity, Price price, bool isBid) noexcept;
+    bool close_order(unsigned int quantity, OfferID id) noexcept;
 
-    auto get_offers_by_price(Price price) -> std::vector<std::pair<OfferID, Count>>;
-    auto get_offers_by_id(OfferID id) -> std::pair<Price, Count>;
+    auto get_offers_by_price(Price price) const noexcept -> std::vector<std::pair<OfferID, Count>>;
+    auto get_offers_by_id(OfferID id) const noexcept -> std::pair<Price, Count>;
 
-    void print_level2_by_price();
-    void print_level2_by_idx();
-    Count get_l2_size();
+    void print_level2_by_price() const noexcept;
+    void print_level2_by_idx() const noexcept;
+    Count get_l2_size() const noexcept;
 
-    bool store();
-    bool load();
+    bool store() const noexcept;
+    bool load() noexcept;
 
 private:
     /**
@@ -53,7 +53,7 @@ private:
                       std::map<OfferID, pair<Price, Count>>& offer_by_id,
                       Price price,
                       Count quantity,
-                      OfferID offer_id);
+                      OfferID offer_id) noexcept;
 
     /**
      * В этом методе обрабатывается ситуация, когда выставляется ask или bid,
@@ -63,7 +63,7 @@ private:
      */
     void exchange_existing_offers(std::map<Price, vector<pair<OfferID, Count>>>& offer,
                                   std::map<OfferID, pair<Price, Count>>& offer_by_id,
-                                  Count& quantity);
+                                  Count& quantity) noexcept;
 
     /**
      *
@@ -76,7 +76,7 @@ private:
     static bool close_order_support(std::map<Price, vector<pair<OfferID, Count>>>& bid_ask_orders,
                                     std::map<OfferID, pair<Price, Count>>& offer_by_id,
                                     Count quantity,
-                                    OfferID id);
+                                    OfferID id) noexcept;
 
-    void create_offer_structure(const nlohmann::basic_json<>& json);
+    void create_offer_structure(const nlohmann::basic_json<>& json) noexcept;
 };

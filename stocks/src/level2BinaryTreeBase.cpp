@@ -11,11 +11,11 @@ using OfferID = uint64_t;   // id of offer. It
 using Count = uint64_t;
 using Callback = std::function<void()>;
 
-Level2BinaryTreeBase::Level2BinaryTreeBase() {
+Level2BinaryTreeBase::Level2BinaryTreeBase() noexcept {
 
 }
 
-OfferID Level2BinaryTreeBase::add_order(Count quantity, Price price, bool isBid) {
+OfferID Level2BinaryTreeBase::add_order(Count quantity, Price price, bool isBid) noexcept {
     if (isBid) {    // выставляем на продажу
         while (price <= asks_.begin()->first && !asks_.empty() && quantity) {
             exchange_existing_offers(asks_, asks_by_offer_, quantity);
@@ -38,7 +38,7 @@ void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<pair<OfferID, Cou
                                         std::map<OfferID, pair<Price, Count>>& offer_by_id,
                                         Price price,
                                         Count quantity,
-                                        OfferID id) {
+                                        OfferID id) noexcept {
     auto order = offer.find(price);
     if (order != offer.end()) {
         offer.insert({price, {}});
@@ -49,7 +49,7 @@ void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<pair<OfferID, Cou
 
 void Level2BinaryTreeBase::exchange_existing_offers(std::map<Price, vector<pair<OfferID, Count>>>& offer,
                                                     std::map<OfferID, pair<Price, Count>>& offer_by_id,
-                                                    Count& quantity) {
+                                                    Count& quantity) noexcept {
     int r = offer.begin()->second.begin()->second - quantity;
     if (r > 0) {            // Количество удаляемых акций меньше, чем мапа
         OfferID offers_id = offer_by_id.find(offer.begin()->second.begin()->first)->first;
@@ -80,7 +80,7 @@ void Level2BinaryTreeBase::exchange_existing_offers(std::map<Price, vector<pair<
 bool Level2BinaryTreeBase::close_order_support(std::map<Price, vector<pair<OfferID, Count>>>& bid_ask_orders,
                                                std::map<OfferID, pair<Price, Count>>& offer_by_id,
                                                Count quantity,
-                                               OfferID id) {
+                                               OfferID id) noexcept {
     auto offer = offer_by_id.find(id);
     if (offer != offer_by_id.end()) {
         if (quantity <= offer->second.second) {
@@ -107,12 +107,12 @@ bool Level2BinaryTreeBase::close_order_support(std::map<Price, vector<pair<Offer
     return false;
 }
 
-bool Level2BinaryTreeBase::close_order(unsigned int quantity, OfferID id) {
+bool Level2BinaryTreeBase::close_order(unsigned int quantity, OfferID id) noexcept {
     return Level2BinaryTreeBase::close_order_support(bids_, bids_by_offer_, quantity, id)
         || Level2BinaryTreeBase::close_order_support(asks_, asks_by_offer_, quantity, id);
 }
 
-auto Level2BinaryTreeBase::get_offers_by_price(Price price) -> std::vector<std::pair<OfferID, Count>> {
+auto Level2BinaryTreeBase::get_offers_by_price(Price price) const noexcept -> std::vector<std::pair<OfferID, Count>> {
     auto bid_offer = bids_.find(price);
     auto ask_offer = asks_.find(price);
     std::vector<std::pair<OfferID, Count>> ret {};
@@ -126,7 +126,7 @@ auto Level2BinaryTreeBase::get_offers_by_price(Price price) -> std::vector<std::
     return ret;
 }
 
-auto Level2BinaryTreeBase::get_offers_by_id(OfferID id) -> std::pair<Price, Count> {
+auto Level2BinaryTreeBase::get_offers_by_id(OfferID id) const noexcept -> std::pair<Price, Count> {
     auto bid_offer = bids_by_offer_.find(id)->second;
     auto ask_offer = asks_by_offer_.find(id)->second;
     std::pair<Price, Count> ret {};
@@ -142,7 +142,7 @@ auto Level2BinaryTreeBase::get_offers_by_id(OfferID id) -> std::pair<Price, Coun
     return ret;
 }
 
-void Level2BinaryTreeBase::print_level2_by_price() {
+void Level2BinaryTreeBase::print_level2_by_price() const noexcept {
     printf("==============\nBids:\n");
     for (auto bid = bids_.rbegin(); bid != bids_.rend(); bid++) {
         for (const auto& offer: bid->second) {
@@ -157,7 +157,7 @@ void Level2BinaryTreeBase::print_level2_by_price() {
     }
 }
 
-void Level2BinaryTreeBase::print_level2_by_idx() {
+void Level2BinaryTreeBase::print_level2_by_idx() const noexcept {
     printf("==============\nBids:\n");
     for (const auto& bid: bids_by_offer_) {
         printf("OfferID: [%llu]; Price: [%llu]; Count: [%llu]\n",bid.first, bid.second.first, bid.second.second);
@@ -168,7 +168,7 @@ void Level2BinaryTreeBase::print_level2_by_idx() {
     }
 }
 
-Count Level2BinaryTreeBase::get_l2_size() {
+Count Level2BinaryTreeBase::get_l2_size() const noexcept {
     Count l2_size {};
     for (const auto& i: bids_by_offer_) {
         l2_size += i.second.second;
@@ -179,7 +179,7 @@ Count Level2BinaryTreeBase::get_l2_size() {
     return l2_size;
 }
 
-bool Level2BinaryTreeBase::store() {
+bool Level2BinaryTreeBase::store() const noexcept {
     std::ofstream file("stocks.json");
     if (!file.is_open()) {
         return false;
@@ -207,7 +207,7 @@ bool Level2BinaryTreeBase::store() {
     return true;
 }
 
-bool Level2BinaryTreeBase::load() {
+bool Level2BinaryTreeBase::load() noexcept {
     std::ifstream file("stocks.json");
     if (!file.is_open()) {
         printf("Unable to open file\n");
@@ -219,7 +219,7 @@ bool Level2BinaryTreeBase::load() {
     return true;
 }
 
-void Level2BinaryTreeBase::create_offer_structure(const nlohmann::basic_json<>& json) {
+void Level2BinaryTreeBase::create_offer_structure(const nlohmann::basic_json<>& json) noexcept {
     for (const auto& str: json) {
         for (const auto& m: str) {
             if (str.begin().key() == "bids") {
