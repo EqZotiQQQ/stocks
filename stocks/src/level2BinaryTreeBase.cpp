@@ -35,7 +35,7 @@ void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<OfferById>>& offe
 void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type,
                                                     Price price,
                                                     Count& quantity) noexcept {
-    bool ret;
+    bool displace_existing_offers;
     std::map<Price, vector<OfferById>>* offer_by_price = nullptr;
     std::map<OfferID, OfferByPrice>* offer_by_id = nullptr;
     switch(offer_type) {
@@ -43,19 +43,19 @@ void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type,
             offer_by_price = &asks_by_price_;
             offer_by_id = &asks_by_offer_;
             if ((!offer_by_price || !offer_by_id) && offer_by_price->empty()) return;
-            ret = price <= offer_by_price->begin()->first;
+            displace_existing_offers = price <= offer_by_price->begin()->first;
             break;
         }
         case OFFER::ASK: {
             offer_by_price = &bids_by_price_;
             offer_by_id = &bids_by_offer_;
             if ((!offer_by_price || !offer_by_id) && offer_by_price->empty()) return;
-            ret = price >= offer_by_price->begin()->first;
+            displace_existing_offers = price >= offer_by_price->begin()->first;
             break;
         }
     }
 
-    while (!offer_by_price->empty() && ret && quantity) {
+    while (!offer_by_price->empty() && displace_existing_offers && quantity) {
         Count count_diff {};
         
         Count* quantity_for_offer = &offer_by_price->begin()->second.front().quantity; // cannot be null, checked in switch-case
@@ -75,7 +75,7 @@ void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type,
 
         if (__builtin_usubll_overflow(*quantity_for_offer, quantity, &count_diff)) {
             // Сработает если число акций в оффере больше чем есть в текущий момент в стакане ниже его
-            quantity -= (*quantity_for_offer);
+            quantity -= *quantity_for_offer;
             p->quantity = 0;
             v->front().quantity = 0;
         } else {
@@ -83,14 +83,13 @@ void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type,
                 // Сработает если число акций в оффере столько же, сколько есть в текущий момент в стакане
                 p->quantity = 0;
                 v->front().quantity = 0;
-                quantity = 0;
             } else {
                 // Сработает если число акций в оффере меньше, чем количество акций в текущий момент в стакане
                 // overflow protected by __builtin_usubll_overflow
                 p->quantity -= quantity;
                 v->front().quantity -= quantity;
-                quantity = 0;
             }
+            quantity = 0;
         }
 
         if (p->quantity == 0) {
@@ -104,6 +103,17 @@ void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type,
             }
             if (s.empty()) {
                 offer_by_price->erase(price_key_to_be_removed);
+            }
+        }
+
+        switch(offer_type) {
+            case OFFER::BID: {
+                displace_existing_offers = price <= offer_by_price->begin()->first;
+                break;
+            }
+            case OFFER::ASK: {
+                displace_existing_offers = price >= offer_by_price->begin()->first;
+                break;
             }
         }
     }

@@ -22,6 +22,7 @@ TEST(Test1, create_level2_and_add_some_orders_with_same_prices) {
         ASSERT_EQ(subject[i].offerId, test[i].offerId);
         ASSERT_EQ(subject[i].quantity, test[i].quantity);
     }
+
     switch(print_type) {
         case 1: l2.print_level2_by_price(); break;
         case 2: l2.print_level2_by_idx(); break;
@@ -49,7 +50,6 @@ TEST(Test1, add_bids_then_add_asks1) {
         ASSERT_EQ(subject[i].quantity, test[i].quantity);
     }
 
-
     switch(print_type) {
         case 1: l2.print_level2_by_price(); break;
         case 2: l2.print_level2_by_idx(); break;
@@ -63,14 +63,16 @@ TEST(Test1, add_bids_then_add_asks2) {
     l2.add_order(10, 72, OFFER::BID);
     l2.add_order(11, 35, OFFER::ASK);
 
-
     std::vector<OfferById> test {{2, 10}};
+    std::vector<OfferById> subject = l2.get_offers_by_price(72);
 
+    ASSERT_EQ(l2.get_l2_size(), 21);
+    ASSERT_EQ(subject.size(), test.size());
+    for (int i = 0; i < test.size(); i++) {
+        ASSERT_EQ(subject[i].offerId, test[i].offerId);
+        ASSERT_EQ(subject[i].quantity, test[i].quantity);
+    }
 
-   // ASSERT_EQ(l2.get_offers_by_price(72), test);
-    std::vector<OfferById> test2 {{3, 1}};
-   // ASSERT_EQ(l2.get_offers_by_price(35), test2);
-   // ASSERT_EQ(l2.get_l2_size(), 21);
     switch(print_type) {
         case 1: l2.print_level2_by_price(); break;
         case 2: l2.print_level2_by_idx(); break;
