@@ -18,6 +18,7 @@ TEST(Test1, create_level2_and_add_some_orders_with_same_prices) {
     l2.add_order(5, 72, 1);
     l2.add_order(1, 72, 1);
     l2.store();
+    l2.load();
     ASSERT_EQ(l2.get_l2_size(), 12);
     std::vector<std::pair<OfferID, Count>> test {{1, 2}};
     ASSERT_EQ(l2.get_offers_by_price(25), test);

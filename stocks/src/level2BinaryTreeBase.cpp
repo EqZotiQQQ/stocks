@@ -3,6 +3,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <fstream>
+#include <iomanip>
 
 using Price = uint64_t;     // price in cents but i guess i need to switch to something bigger to remove overflow issue
 using OfferID = uint64_t;   // id of offer. It
@@ -177,24 +178,43 @@ Count Level2BinaryTreeBase::get_l2_size() {
 }
 
 bool Level2BinaryTreeBase::store() {
-    //std::ifstream i("file.json");
-    nlohmann::json j;
+    std::ofstream file("stocks.json");
+    if (!file.is_open()) {
+        return false;
+    }
+    nlohmann::json json;
     for (auto iter = bids_.begin(); iter != bids_.end(); iter++) {
         Count total_count{};
         for (auto i: iter->second) {
             total_count += i.second;
         }
-        //cout << "total count for " << iter->first << " is " << total_count << "\n";
-        nlohmann::json t;
-        t["bids"]["price"] = iter->first;
-        t["bids"]["quantity"] = total_count;
-        j += t;
+
+        nlohmann::json offers_by_price;
+        offers_by_price["bids"]["price"] = iter->first;
+        offers_by_price["bids"]["quantity"] = total_count;
+        json += offers_by_price;
     }
-    std::cout << j.dump();
-    //i >> j;
+    file << std::setw(4) << json << std::endl;
     return true;
 }
 
 bool Level2BinaryTreeBase::load() {
+    std::ifstream file("stocks.json");
+    if (!file.is_open()) {
+        printf("Unable to open file\n");
+        return false;
+    }
+    nlohmann::json json;
+    file >> json;
+    /*for (auto j: json) {
+        cout << j << endl;
+        for(auto i: j) {
+            cout << i << endl;
+            for(auto e: i) {
+                cout << e << endl;
+            }
+        }
+    }*/
+
     return true;
 }
