@@ -9,7 +9,7 @@ using OfferID = uint64_t;   // id of offer. It
 using Count = uint64_t;
 using Callback = std::function<void()>;
 
-constexpr int print_type{3};
+constexpr int print_type{1};
 
 TEST(Test1, create_level2_and_add_some_orders_with_same_prices) {
     Level2Interface l2;
@@ -17,8 +17,6 @@ TEST(Test1, create_level2_and_add_some_orders_with_same_prices) {
     l2.add_order(2, 25, 1);
     l2.add_order(5, 72, 1);
     l2.add_order(1, 72, 1);
-    l2.store();
-    l2.load();
     ASSERT_EQ(l2.get_l2_size(), 12);
     std::vector<std::pair<OfferID, Count>> test {{1, 2}};
     ASSERT_EQ(l2.get_offers_by_price(25), test);
@@ -105,6 +103,27 @@ TEST(Test1, add_bids_then_add_asks5) {
         case 2: l2.print_level2_by_idx(); break;
     }
 }
+
+TEST(Test1, add_bids_then_add_asks6) {
+    Level2Interface l2;
+    l2.add_order(10, 50, 1);
+    l2.add_order(10, 25, 1);
+    l2.add_order(10, 72, 1);
+    l2.add_order(2, 10, 0);
+    l2.add_order(1, 5, 0);
+    l2.store();
+
+    Level2Interface l2_1;
+    l2_1.load();
+//    std::vector<std::pair<OfferID, Count>> test {{2, 10}};
+//    ASSERT_EQ(l2.get_l2_size(), 27);
+//    ASSERT_EQ(l2.get_offers_by_price(72), test);
+    switch(print_type) {
+        case 1: l2_1.print_level2_by_price(); break;
+        case 2: l2_1.print_level2_by_idx(); break;
+    }
+}
+
 
 TEST(Test2, close_order1) {
     Level2Interface l2;

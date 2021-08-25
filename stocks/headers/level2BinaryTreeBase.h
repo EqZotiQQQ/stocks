@@ -5,6 +5,7 @@
 #include <tuple>
 #include <functional>
 #include <cstdint>
+#include "../../cmake-build-debug/_deps/json-src/include/nlohmann/json.hpp"
 
 using namespace std;
 
@@ -12,7 +13,7 @@ class Level2BinaryTreeBase {
     using Price = uint64_t;     // price in cents but i guess i need to switch to something bigger to remove overflow issue
     using OfferID = uint64_t;   // id of offer. It
     using Count = uint64_t;
-    using Callback = std::function<void()>;
+    using Callback = std::function<void()>; // Этот колбек, можно вызвывать по отработке оффера
 private:
     std::map<Price, vector<pair<OfferID, Count>>> bids_{};
     std::map<Price, vector<pair<OfferID, Count>>> asks_{};
@@ -49,7 +50,8 @@ private:
     void add_offer_to(std::map<Price, vector<pair<OfferID, Count>>>& offer,
                       std::map<OfferID, pair<Price, Count>>& offer_by_id,
                       Price price,
-                      int quantity);
+                      int quantity,
+                      int offer_id);
 
     /**
      * В этом методе обрабатывается ситуация, когда выставляется ask или bid,
@@ -73,4 +75,6 @@ private:
                                     std::map<OfferID, pair<Price, Count>>& offer_by_id,
                                     int quantity,
                                     int id);
+
+    void create_offer_structure(const nlohmann::basic_json<>& json);
 };

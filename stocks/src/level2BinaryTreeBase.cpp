@@ -20,14 +20,14 @@ OfferID Level2BinaryTreeBase::add_order(int quantity, Price price, bool isBid) {
             exchange_existing_offers(asks_, asks_by_offer_, quantity);
         }
         if (quantity) {     //  Если остались элементы, то добавляем их в аски
-            add_offer_to(bids_, bids_by_offer_, price, quantity);
+            add_offer_to(bids_, bids_by_offer_, price, quantity, offer_id);
         }
     } else { // выставляем на покупку
         while (price >= bids_.begin()->first && !bids_.empty() && quantity) {
             exchange_existing_offers(bids_, bids_by_offer_, quantity);
         }
         if (quantity) {     //  Если остались элементы, то добавляем их в аски
-            add_offer_to(asks_, asks_by_offer_, price, quantity);
+            add_offer_to(asks_, asks_by_offer_, price, quantity, offer_id);
         }
     }
     return ++offer_id;
@@ -36,13 +36,14 @@ OfferID Level2BinaryTreeBase::add_order(int quantity, Price price, bool isBid) {
 void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<pair<OfferID, Count>>>& offer,
                                         std::map<OfferID, pair<Price, Count>>& offer_by_id,
                                         Price price,
-                                        int quantity) {
+                                        int quantity,
+                                        int id) {
     auto order = offer.find(price);
     if (order != offer.end()) {
         offer.insert({price, {}});
     }
-    offer[price].push_back({offer_id, quantity});
-    offer_by_id.insert({offer_id, {price, quantity}});
+    offer[price].push_back({id, quantity});
+    offer_by_id.insert({id, {price, quantity}});
 }
 
 void Level2BinaryTreeBase::exchange_existing_offers(std::map<Price, vector<pair<OfferID, Count>>>& offer,
@@ -143,13 +144,13 @@ auto Level2BinaryTreeBase::get_offers_by_id(OfferID id) -> std::pair<Price, Coun
 void Level2BinaryTreeBase::print_level2_by_price() {
     printf("==============\nBids:\n");
     for (auto bid = bids_.rbegin(); bid != bids_.rend(); bid++) {
-        for (auto offer: bid->second) {
+        for (const auto& offer: bid->second) {
             printf("Price [%llu]; ID: [%llu]; Count: [%llu]\n", bid->first, offer.first, offer.second);
         }
     }
     printf("==============\nAsks:\n");
     for (auto ask = asks_.rbegin(); ask != asks_.rend(); ask++) {
-        for (auto offer: ask->second) {
+        for (const auto& offer: ask->second) {
             printf("Price [%llu]; ID: [%llu]; Count: [%llu]\n", ask->first, offer.first, offer.second);
         }
     }
@@ -157,21 +158,21 @@ void Level2BinaryTreeBase::print_level2_by_price() {
 
 void Level2BinaryTreeBase::print_level2_by_idx() {
     printf("==============\nBids:\n");
-    for (auto bid: bids_by_offer_) {
+    for (const auto& bid: bids_by_offer_) {
         printf("OfferID: [%llu]; Price: [%llu]; Count: [%llu]\n",bid.first, bid.second.first, bid.second.second);
     }
     printf("==============\nAsks:\n");
-    for (auto ask: asks_by_offer_) {
+    for (const auto& ask: asks_by_offer_) {
         printf("OfferID: [%llu]; Price: [%llu]; Count: [%llu]\n",ask.first, ask.second.first, ask.second.second);
     }
 }
 
 Count Level2BinaryTreeBase::get_l2_size() {
     Count l2_size {};
-    for (auto i: bids_by_offer_) {
+    for (const auto& i: bids_by_offer_) {
         l2_size += i.second.second;
     }
-    for (auto i: asks_by_offer_) {
+    for (const auto& i: asks_by_offer_) {
         l2_size += i.second.second;
     }
     return l2_size;
@@ -184,15 +185,22 @@ bool Level2BinaryTreeBase::store() {
     }
     nlohmann::json json;
     for (auto iter = bids_.begin(); iter != bids_.end(); iter++) {
-        Count total_count{};
-        for (auto i: iter->second) {
-            total_count += i.second;
+        for (const auto& i: iter->second) {
+            nlohmann::json offers_by_price;
+            offers_by_price["bids"]["id"] = i.first;
+            offers_by_price["bids"]["price"] = iter->first;
+            offers_by_price["bids"]["quantity"] = i.second;
+            json += offers_by_price;
         }
-
-        nlohmann::json offers_by_price;
-        offers_by_price["bids"]["price"] = iter->first;
-        offers_by_price["bids"]["quantity"] = total_count;
-        json += offers_by_price;
+    }
+    for (auto iter = asks_.begin(); iter != asks_.end(); iter++) {
+        for (const auto& i: iter->second) {
+            nlohmann::json offers_by_price;
+            offers_by_price["asks"]["id"] = i.first;
+            offers_by_price["asks"]["price"] = iter->first;
+            offers_by_price["asks"]["quantity"] = i.second;
+            json += offers_by_price;
+        }
     }
     file << std::setw(4) << json << std::endl;
     return true;
@@ -206,15 +214,18 @@ bool Level2BinaryTreeBase::load() {
     }
     nlohmann::json json;
     file >> json;
-    /*for (auto j: json) {
-        cout << j << endl;
-        for(auto i: j) {
-            cout << i << endl;
-            for(auto e: i) {
-                cout << e << endl;
+    create_offer_structure(json);
+    return true;
+}
+
+void Level2BinaryTreeBase::create_offer_structure(const nlohmann::basic_json<>& json) {
+    for (const auto& j: json) {
+        for (const auto& i: j) {
+            if (j.begin().key() == "bids") {
+                add_offer_to(bids_, bids_by_offer_, i["price"], i["quantity"], i["id"]);
+            } else {
+                add_offer_to(asks_, asks_by_offer_, i["price"], i["quantity"], i["id"]);
             }
         }
-    }*/
-
-    return true;
+    }
 }
