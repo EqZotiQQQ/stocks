@@ -1,9 +1,10 @@
 #include "level2BinaryTreeBase.h"
 
 #include <iostream>
-#include <nlohmann/json.hpp>
 #include <fstream>
 #include <iomanip>
+
+#include <nlohmann/json.hpp>
 
 using Price = uint64_t;     // price in cents but i guess i need to switch to something bigger to remove overflow issue
 using OfferID = uint64_t;   // id of offer. It
@@ -14,7 +15,7 @@ Level2BinaryTreeBase::Level2BinaryTreeBase() {
 
 }
 
-OfferID Level2BinaryTreeBase::add_order(int quantity, Price price, bool isBid) {
+OfferID Level2BinaryTreeBase::add_order(Count quantity, Price price, bool isBid) {
     if (isBid) {    // выставляем на продажу
         while (price <= asks_.begin()->first && !asks_.empty() && quantity) {
             exchange_existing_offers(asks_, asks_by_offer_, quantity);
@@ -36,8 +37,8 @@ OfferID Level2BinaryTreeBase::add_order(int quantity, Price price, bool isBid) {
 void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<pair<OfferID, Count>>>& offer,
                                         std::map<OfferID, pair<Price, Count>>& offer_by_id,
                                         Price price,
-                                        int quantity,
-                                        int id) {
+                                        Count quantity,
+                                        OfferID id) {
     auto order = offer.find(price);
     if (order != offer.end()) {
         offer.insert({price, {}});
@@ -48,7 +49,7 @@ void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<pair<OfferID, Cou
 
 void Level2BinaryTreeBase::exchange_existing_offers(std::map<Price, vector<pair<OfferID, Count>>>& offer,
                                                     std::map<OfferID, pair<Price, Count>>& offer_by_id,
-                                                    int& quantity) {
+                                                    Count& quantity) {
     int r = offer.begin()->second.begin()->second - quantity;
     if (r > 0) {            // Количество удаляемых акций меньше, чем мапа
         OfferID offers_id = offer_by_id.find(offer.begin()->second.begin()->first)->first;
@@ -78,8 +79,8 @@ void Level2BinaryTreeBase::exchange_existing_offers(std::map<Price, vector<pair<
 
 bool Level2BinaryTreeBase::close_order_support(std::map<Price, vector<pair<OfferID, Count>>>& bid_ask_orders,
                                                std::map<OfferID, pair<Price, Count>>& offer_by_id,
-                                               int quantity,
-                                               int id) {
+                                               Count quantity,
+                                               OfferID id) {
     auto offer = offer_by_id.find(id);
     if (offer != offer_by_id.end()) {
         if (quantity <= offer->second.second) {
@@ -219,12 +220,12 @@ bool Level2BinaryTreeBase::load() {
 }
 
 void Level2BinaryTreeBase::create_offer_structure(const nlohmann::basic_json<>& json) {
-    for (const auto& j: json) {
-        for (const auto& i: j) {
-            if (j.begin().key() == "bids") {
-                add_offer_to(bids_, bids_by_offer_, i["price"], i["quantity"], i["id"]);
+    for (const auto& str: json) {
+        for (const auto& m: str) {
+            if (str.begin().key() == "bids") {
+                add_offer_to(bids_, bids_by_offer_, m["price"], m["quantity"], m["id"]);
             } else {
-                add_offer_to(asks_, asks_by_offer_, i["price"], i["quantity"], i["id"]);
+                add_offer_to(asks_, asks_by_offer_, m["price"], m["quantity"], m["id"]);
             }
         }
     }

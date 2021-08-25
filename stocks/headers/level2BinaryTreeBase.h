@@ -5,6 +5,8 @@
 #include <tuple>
 #include <functional>
 #include <cstdint>
+
+/*it's fucking disgusting*/
 #include "../../cmake-build-debug/_deps/json-src/include/nlohmann/json.hpp"
 
 using namespace std;
@@ -25,7 +27,7 @@ private:
 public:
     Level2BinaryTreeBase();
 
-    OfferID add_order(int quantity, Price price, bool isBid);
+    OfferID add_order(Count quantity, Price price, bool isBid);
     bool close_order(unsigned int quantity, OfferID id);
 
     auto get_offers_by_price(Price price) -> std::vector<std::pair<OfferID, Count>>;
@@ -50,8 +52,8 @@ private:
     void add_offer_to(std::map<Price, vector<pair<OfferID, Count>>>& offer,
                       std::map<OfferID, pair<Price, Count>>& offer_by_id,
                       Price price,
-                      int quantity,
-                      int offer_id);
+                      Count quantity,
+                      OfferID offer_id);
 
     /**
      * В этом методе обрабатывается ситуация, когда выставляется ask или bid,
@@ -61,7 +63,7 @@ private:
      */
     void exchange_existing_offers(std::map<Price, vector<pair<OfferID, Count>>>& offer,
                                   std::map<OfferID, pair<Price, Count>>& offer_by_id,
-                                  int& quantity);
+                                  Count& quantity);
 
     /**
      *
@@ -73,8 +75,8 @@ private:
      */
     static bool close_order_support(std::map<Price, vector<pair<OfferID, Count>>>& bid_ask_orders,
                                     std::map<OfferID, pair<Price, Count>>& offer_by_id,
-                                    int quantity,
-                                    int id);
+                                    Count quantity,
+                                    OfferID id);
 
     void create_offer_structure(const nlohmann::basic_json<>& json);
 };
