@@ -19,6 +19,7 @@ OfferID Level2BinaryTreeBase::add_order(Count quantity, Price price, OFFER offer
     return ++offer_id;
 }
 
+// TODO: prob need to use set_offers_by_type to reduce number of args
 void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<OfferById>>& offer,
                                         std::map<OfferID, OfferByPrice>& offer_by_id,
                                         Price price,
@@ -33,6 +34,7 @@ void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<OfferById>>& offe
     offer_by_id.insert({id, {price, quantity}});
 }
 
+//TODO replace by two methods, to more logic and bad name
 bool Level2BinaryTreeBase::set_offers_by_type(OFFER offer_type, std::map<Price, vector<OfferById>>*& offer_by_price, std::map<OfferID, OfferByPrice>*& offer_by_id, Price price) {
     bool displace_existing_offers {false};
     switch(offer_type) {
@@ -146,12 +148,9 @@ auto Level2BinaryTreeBase::get_offers_by_price(Price price) const noexcept -> st
 }
 
 bool Level2BinaryTreeBase::get_offers_by_id(OfferID id, OfferByPrice*& v) noexcept {
-    auto bid_offer = bids_by_offer_.find(id);
-    auto ask_offer = asks_by_offer_.find(id);
-    //printf("Offer for [%llu] id\n", offer_id);
-    if (bid_offer != bids_by_offer_.end()) {
+    if (bids_by_offer_.find(id) != bids_by_offer_.end()) {
         v = &bids_by_offer_.at(id);
-    } else if (ask_offer != asks_by_offer_.end()) {
+    } else if (asks_by_offer_.find(id) != asks_by_offer_.end()) {
         v = &asks_by_offer_.at(id);
     } else {
         printf("No offer for [%llu] id\n", offer_id);
@@ -161,13 +160,11 @@ bool Level2BinaryTreeBase::get_offers_by_id(OfferID id, OfferByPrice*& v) noexce
 }
 
 auto Level2BinaryTreeBase::get_offers_by_id(OfferID id) const noexcept -> OfferByPrice {
-    auto bid_offer = bids_by_offer_.find(id);
-    auto ask_offer = asks_by_offer_.find(id);
     OfferByPrice ret {0,0};
-    if (bid_offer != bids_by_offer_.end()) {
+    if (bids_by_offer_.find(id) != bids_by_offer_.end()) {
         ret.price =  bids_by_offer_.at(id).price;
         ret.quantity = bids_by_offer_.at(id).quantity;
-    } else if (ask_offer != asks_by_offer_.end()) {
+    } else if (asks_by_offer_.find(id) != asks_by_offer_.end()) {
         ret.price = asks_by_offer_.at(id).price;
         ret.quantity = asks_by_offer_.at(id).quantity;
     } else {
