@@ -5,13 +5,14 @@
 #include <iomanip>
 
 OfferID Level2BinaryTreeBase::add_order(Count quantity, Price price, OFFER offer_type) noexcept {
+
     if (offer_type == OFFER::BID) {    // выставляем на продажу
-        exchange_existing_offers(offer_type, price, quantity);
-        if (quantity) {     //  Если остались элементы, то добавляем их в аски
+        exchange_existing_offers(offer_type, price, quantity);  // Нужно обменять аски, если наш бид ниже по цене
+        if (quantity) {     //  Если остались элементы, то добавляем их в биды
             add_offer_to(bids_by_price_, bids_by_offer_, price, quantity, offer_id);
         }
     } else { // выставляем на покупку
-        exchange_existing_offers(offer_type, price, quantity);
+        exchange_existing_offers(offer_type, price, quantity); // наоборот :10
         if (quantity) {     //  Если остались элементы, то добавляем их в аски
             add_offer_to(asks_by_price_, asks_by_offer_, price, quantity, offer_id);
         }
@@ -19,54 +20,18 @@ OfferID Level2BinaryTreeBase::add_order(Count quantity, Price price, OFFER offer
     return ++offer_id;
 }
 
-// TODO: prob need to use set_offers_by_type to reduce number of args
-void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<OfferById>>& offer,
-                                        std::map<OfferID, OfferByPrice>& offer_by_id,
-                                        Price price,
-                                        Count quantity,
-                                        OfferID id) noexcept {
-
-    auto order = offer.find(price);
-    if (order != offer.end()) {
-        offer.insert({price, {}});
-    }
-    offer[price].push_back({id, quantity});
-    offer_by_id.insert({id, {price, quantity}});
-}
-
-//TODO replace by two methods, to more logic and bad name
-bool Level2BinaryTreeBase::set_offers_by_type(OFFER offer_type, std::map<Price, vector<OfferById>>*& offer_by_price, std::map<OfferID, OfferByPrice>*& offer_by_id, Price price) {
-    bool displace_existing_offers {false};
-    switch(offer_type) {
-        case OFFER::BID: {
-            offer_by_price = &asks_by_price_;
-            offer_by_id = &asks_by_offer_;
-            if ((!offer_by_price || !offer_by_id) && offer_by_price->empty()) return false;
-            displace_existing_offers = price <= offer_by_price->begin()->first;
-            break;
-        }
-        case OFFER::ASK: {
-            offer_by_price = &bids_by_price_;
-            offer_by_id = &bids_by_offer_;
-            if ((!offer_by_price || !offer_by_id) && offer_by_price->empty()) return false;
-            displace_existing_offers = price >= offer_by_price->begin()->first;
-            break;
-        }
-    }
-    return displace_existing_offers;
-}
-
-void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type,
-                                                    Price price,
-                                                    Count& quantity) noexcept {
+void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type, Price price, Count& quantity) noexcept {
 
     std::map<Price, vector<OfferById>>* offer_by_price = nullptr;
     std::map<OfferID, OfferByPrice>* offer_by_id = nullptr;
 
-    bool displace_existing_offers = set_offers_by_type(offer_type, offer_by_price, offer_by_id, price);
-    while (!offer_by_price->empty() && displace_existing_offers && quantity) {
+    set_offers_by_type(offer_type, offer_by_price, offer_by_id);
+
+    if (!offer_by_price || !offer_by_id) return;
+
+    while (!offer_by_price->empty() && compare_prices(offer_type, price, offer_by_price->begin()->first) && quantity) {
         Count count_diff {};
-        
+
         Count* quantity_for_offer = &offer_by_price->begin()->second.front().quantity; // cannot be null, checked in switch-case
 
         std::vector<OfferById>* v = nullptr;
@@ -114,9 +79,22 @@ void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type,
                 offer_by_price->erase(price_key_to_be_removed);
             }
         }
-
-        displace_existing_offers = set_offers_by_type(offer_type, offer_by_price, offer_by_id, price);
     }
+}
+
+// TODO: prob need to use set_offers_by_type to reduce number of args
+void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<OfferById>>& offer,
+                                        std::map<OfferID, OfferByPrice>& offer_by_id,
+                                        Price price,
+                                        Count quantity,
+                                        OfferID id) noexcept {
+
+    auto order = offer.find(price);
+    if (order != offer.end()) {
+        offer.insert({price, {}});
+    }
+    offer[price].push_back({id, quantity});
+    offer_by_id.insert({id, {price, quantity}});
 }
 
 bool Level2BinaryTreeBase::get_offers_by_price(Price price, std::vector<OfferById>*& v) noexcept {
@@ -174,38 +152,64 @@ auto Level2BinaryTreeBase::get_offers_by_id(OfferID id) const noexcept -> OfferB
 }
 
 bool Level2BinaryTreeBase::close_order(Count quantity, OfferID id) noexcept {
-    return Level2BinaryTreeBase::close_order_support(bids_by_price_, bids_by_offer_, quantity, id)
-    || Level2BinaryTreeBase::close_order_support(asks_by_price_, asks_by_offer_, quantity, id);
+    if (bids_by_offer_.find(id) != bids_by_offer_.end()) {
+        return close_order_support(OFFER::ASK, quantity, id);
+    } else if (asks_by_offer_.find(id) != asks_by_offer_.end()) {
+        return close_order_support(OFFER::BID, quantity, id);
+    } else {
+        return false;
+    }
 }
 
-bool Level2BinaryTreeBase::close_order_support(std::map<Price, vector<OfferById>>& bid_ask_orders,
-                                               std::map<OfferID, OfferByPrice>& offer_by_id,
+bool Level2BinaryTreeBase::close_order_support(OFFER offer_type,
                                                Count quantity,
                                                OfferID id) noexcept {
-    auto offer = offer_by_id.find(id);
-    if (offer != offer_by_id.end()) {
-        if (quantity <= offer->second.quantity) {
-            offer_by_id[id].quantity -= quantity;
 
-            for (int i = 0; i < bid_ask_orders[offer_by_id[id].price].size(); i++) {
-                if (bid_ask_orders[offer_by_id[id].price].at(i).offerId == id) {
-                    bid_ask_orders[offer_by_id[id].price].at(i).quantity -= quantity;
-                    if (bid_ask_orders[offer_by_id[id].price].at(i).quantity == 0) {
-                        bid_ask_orders[offer_by_id[id].price].erase(bid_ask_orders[offer_by_id[id].price].begin() + i);
-                    }
-                }
+    std::map<OfferID, OfferByPrice>* offer_by_id = nullptr;
+    std::map<Price, vector<OfferById>>* offer_by_price = nullptr;
+
+    set_offers_by_type(offer_type, offer_by_price, offer_by_id);
+
+    if (!offer_by_price || !offer_by_id || offer_by_id->find(id) == offer_by_id->end())
+        return false;
+
+    Price exist_close_diff {};
+    Price offer_price = offer_by_id->at(id).price;  // to find in second map
+
+    vector<OfferById>* ids_by_price = nullptr;
+    if (!get_offers_by_price(offer_price, ids_by_price)) {
+        return false;
+    }
+
+    if (offer_by_id->at(id).quantity < quantity) {
+        // Сработает если число акций в оффере больше чем есть в текущий момент в стакане ниже его
+        return false;
+    } else {
+
+        OfferID id_position = 0;
+        for (; id_position < ids_by_price->size(); id_position++) {
+            if (ids_by_price->at(id_position).offerId == id) {
+                break;
+            }
+        }
+
+        if (offer_by_id->at(id).quantity == quantity) {
+            // Сработает если число акций в оффере столько же, сколько есть в текущий момент в стакане
+            offer_by_id->erase(id);
+
+            ids_by_price->erase(ids_by_price->begin() + id_position);
+            if (ids_by_price->empty()) {
+                offer_by_price->erase(offer_price);
             }
 
-            if (offer_by_id[id].quantity == 0) {
-                offer_by_id.erase(id);
-            }
-
-            return true;
         } else {
-            printf("Incorrect quantity for close order: [%lu] while [%lu] available.\n", quantity, offer->second.quantity);
+            // Сработает если число акций в оффере меньше, чем количество акций в текущий момент в стакане
+            offer_by_id->at(id).quantity -= quantity;
+            ids_by_price->at(id_position).quantity -= quantity;
         }
     }
-    return false;
+
+    return true;
 }
 
 void Level2BinaryTreeBase::print_level2_by_price() const noexcept {
@@ -231,6 +235,26 @@ void Level2BinaryTreeBase::print_level2_by_idx() const noexcept {
     printf("==============\nAsks:\n");
     for (const auto& ask: asks_by_offer_) {
         printf("OfferID: [%llu]; Price: [%llu]; Count: [%llu]\n",ask.first, ask.second.price, ask.second.quantity);
+    }
+}
+
+bool Level2BinaryTreeBase::compare_prices(OFFER offer_type, Price rhs, Price lhs) {
+    if (offer_type == OFFER::BID) {
+        return rhs <= lhs;
+    } else {
+        return rhs >= lhs;
+    }
+}
+
+void Level2BinaryTreeBase::set_offers_by_type(OFFER offer_type,
+                                              std::map<Price, vector<OfferById>>*& offer_by_price,
+                                              std::map<OfferID, OfferByPrice>*& offer_by_id) {
+    if (offer_type == OFFER::BID) {
+        offer_by_price = &asks_by_price_;
+        offer_by_id = &asks_by_offer_;
+    } else {
+        offer_by_price = &bids_by_price_;
+        offer_by_id = &bids_by_offer_;
     }
 }
 
@@ -260,7 +284,7 @@ bool Level2BinaryTreeBase::store() const noexcept {
             json += offers_by_price;
         }
     }
-    for (const auto & iter : asks_by_price_) {
+    for (const auto& iter : asks_by_price_) {
         for (const auto& i: iter.second) {
             nlohmann::json offers_by_price;
             offers_by_price["asks"]["id"] = i.offerId;
