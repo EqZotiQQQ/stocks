@@ -9,8 +9,6 @@
 /*it's fucking disgusting*/
 #include "../../cmake-build-debug/_deps/json-src/include/nlohmann/json.hpp"
 
-using namespace std;
-
 enum class OFFER {BID, ASK};
 
 using Price = uint64_t;     // price in cents but i guess i need to switch to something bigger to remove overflow issue
@@ -36,13 +34,13 @@ struct OfferByPrice {
 
 class Level2BinaryTreeBase {
 private:
-    std::map<Price, vector<OfferById>> bids_by_price_{};
-    std::map<Price, vector<OfferById>> asks_by_price_{};
+    std::map<Price, std::vector<OfferById>> bids_ordered_by_price_ {};
+    std::map<Price, std::vector<OfferById>> asks_ordered_by_price_ {};
 
-    std::map<OfferID, OfferByPrice> bids_by_offer_{};
-    std::map<OfferID, OfferByPrice> asks_by_offer_{};
+    std::map<OfferID, OfferByPrice> bids_ordered_by_offer_ {};
+    std::map<OfferID, OfferByPrice> asks_ordered_by_offer_ {};
 
-    uint64_t offer_id {};
+    uint64_t offer_id_ {};
 public:
 
     OfferID add_order(Count quantity, Price price, OFFER offer_type) noexcept;
@@ -65,7 +63,7 @@ public:
 private:
 
     void set_offers_by_type(OFFER offer_type,
-                            std::map<Price, vector<OfferById>>*& offer_by_price,
+                            std::map<Price, std::vector<OfferById>>*& offer_by_price,
                             std::map<OfferID, OfferByPrice>*& offer_by_id);
 
     bool compare_prices(OFFER offer_type, Price rhs, Price lhs);
@@ -78,7 +76,7 @@ private:
      * @param price - цена сделки
      * @param quantity - количество акций в оффере.
      */
-    void add_offer_to(std::map<Price, vector<OfferById>>& offer,
+    void add_offer_to(std::map<Price, std::vector<OfferById>>& offer,
                       std::map<OfferID, OfferByPrice>& offer_by_id,
                       Price price,
                       Count quantity,

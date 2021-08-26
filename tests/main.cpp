@@ -183,7 +183,7 @@ TEST(Test1, add_bids_then_add_asks7) {
     }
 
     OfferByPrice* subject2 = nullptr;
-    auto test_pair = make_pair(150,10);
+    auto test_pair = std::make_pair(150,10);
     l2.get_offers_by_id(3, subject2);
 
     ASSERT_TRUE(subject2);
