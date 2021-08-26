@@ -34,39 +34,39 @@ void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type, Price pric
 
         Count* quantity_for_offer = &offer_by_price->begin()->second.front().quantity; // cannot be null, checked in switch-case
 
-        std::vector<OfferById>* v = nullptr;
-        if (!get_offers_by_price(offer_by_price->begin()->first, v)) {
+        std::vector<OfferById>* offers_for_price = nullptr;
+        if (!get_offers_by_price(offer_by_price->begin()->first, offers_for_price)) {
             return;
         }
 
-        OfferByPrice* p = nullptr;
-        if (!get_offers_by_id(v->front().offerId, p)) {
+        OfferByPrice* offerByPrice = nullptr;
+        if (!get_offers_by_id(offers_for_price->front().offerId, offerByPrice)) {
             return;
         }
 
-        OfferID id_key_to_be_removed = v->front().offerId;
-        Price price_key_to_be_removed = p->price;
+        OfferID id_key_to_be_removed = offers_for_price->front().offerId;
+        Price price_key_to_be_removed = offerByPrice->price;
 
         if (__builtin_usubll_overflow(*quantity_for_offer, quantity, &count_diff)) {
             // Сработает если число акций в оффере больше чем есть в текущий момент в стакане ниже его
             quantity -= *quantity_for_offer;
-            p->quantity = 0;
-            v->front().quantity = 0;
+            offerByPrice->quantity = 0;
+            offers_for_price->front().quantity = 0;
         } else {
             if (*quantity_for_offer == quantity) {
                 // Сработает если число акций в оффере столько же, сколько есть в текущий момент в стакане
-                p->quantity = 0;
-                v->front().quantity = 0;
+                offerByPrice->quantity = 0;
+                offers_for_price->front().quantity = 0;
             } else {
                 // Сработает если число акций в оффере меньше, чем количество акций в текущий момент в стакане
                 // overflow protected by __builtin_usubll_overflow
-                p->quantity -= quantity;
-                v->front().quantity -= quantity;
+                offerByPrice->quantity -= quantity;
+                offers_for_price->front().quantity -= quantity;
             }
             quantity = 0;
         }
 
-        if (p->quantity == 0) {
+        if (offerByPrice->quantity == 0) {
             offer_by_id->erase(id_key_to_be_removed);
             std::vector<OfferById> s = offer_by_price->find(price_key_to_be_removed)->second;
             for (int i = 0; i < s.size(); i++) {
@@ -173,7 +173,6 @@ bool Level2BinaryTreeBase::close_order_support(OFFER offer_type,
     if (!offer_by_price || !offer_by_id || offer_by_id->find(id) == offer_by_id->end())
         return false;
 
-    Price exist_close_diff {};
     Price offer_price = offer_by_id->at(id).price;  // to find in second map
 
     vector<OfferById>* ids_by_price = nullptr;
@@ -185,7 +184,6 @@ bool Level2BinaryTreeBase::close_order_support(OFFER offer_type,
         // Сработает если число акций в оффере больше чем есть в текущий момент в стакане ниже его
         return false;
     } else {
-
         OfferID id_position = 0;
         for (; id_position < ids_by_price->size(); id_position++) {
             if (ids_by_price->at(id_position).offerId == id) {
@@ -201,14 +199,12 @@ bool Level2BinaryTreeBase::close_order_support(OFFER offer_type,
             if (ids_by_price->empty()) {
                 offer_by_price->erase(offer_price);
             }
-
         } else {
             // Сработает если число акций в оффере меньше, чем количество акций в текущий момент в стакане
             offer_by_id->at(id).quantity -= quantity;
             ids_by_price->at(id_position).quantity -= quantity;
         }
     }
-
     return true;
 }
 
@@ -275,20 +271,20 @@ bool Level2BinaryTreeBase::store() const noexcept {
         return false;
     }
     nlohmann::json json;
-    for (const auto & iter : bids_by_price_) {
-        for (const auto& i: iter.second) {
+    for (auto iter = bids_by_price_.rbegin(); iter != bids_by_price_.rend(); iter++) {
+        for (const auto& i: iter->second) {
             nlohmann::json offers_by_price;
             offers_by_price["bids"]["id"] = i.offerId;
-            offers_by_price["bids"]["price"] = iter.first;
+            offers_by_price["bids"]["price"] = iter->first;
             offers_by_price["bids"]["quantity"] = i.quantity;
             json += offers_by_price;
         }
     }
-    for (const auto& iter : asks_by_price_) {
-        for (const auto& i: iter.second) {
+    for (auto iter = asks_by_price_.rbegin(); iter != asks_by_price_.rend(); iter++) {
+        for (const auto& i: iter->second) {
             nlohmann::json offers_by_price;
             offers_by_price["asks"]["id"] = i.offerId;
-            offers_by_price["asks"]["price"] = iter.first;
+            offers_by_price["asks"]["price"] = iter->first;
             offers_by_price["asks"]["quantity"] = i.quantity;
             json += offers_by_price;
         }
