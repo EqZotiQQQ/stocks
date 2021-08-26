@@ -64,7 +64,7 @@ public:
 
 private:
 
-
+    bool set_offers_by_type(OFFER offer_type, std::map<Price, vector<OfferById>>*& offer_by_price, std::map<OfferID, OfferByPrice>*& offer_by_id, Price price) ;
     /**
      * В этом методе ask или bid добавляется в стаккан. Если оффера по такой цене
      * ещё небыло, то создаётся новый ключ, если такой оффер уже был - то оффер

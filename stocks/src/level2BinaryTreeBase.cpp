@@ -24,6 +24,7 @@ void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<OfferById>>& offe
                                         Price price,
                                         Count quantity,
                                         OfferID id) noexcept {
+
     auto order = offer.find(price);
     if (order != offer.end()) {
         offer.insert({price, {}});
@@ -32,29 +33,35 @@ void Level2BinaryTreeBase::add_offer_to(std::map<Price, vector<OfferById>>& offe
     offer_by_id.insert({id, {price, quantity}});
 }
 
-void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type,
-                                                    Price price,
-                                                    Count& quantity) noexcept {
-    bool displace_existing_offers;
-    std::map<Price, vector<OfferById>>* offer_by_price = nullptr;
-    std::map<OfferID, OfferByPrice>* offer_by_id = nullptr;
+bool Level2BinaryTreeBase::set_offers_by_type(OFFER offer_type, std::map<Price, vector<OfferById>>*& offer_by_price, std::map<OfferID, OfferByPrice>*& offer_by_id, Price price) {
+    bool displace_existing_offers {false};
     switch(offer_type) {
         case OFFER::BID: {
             offer_by_price = &asks_by_price_;
             offer_by_id = &asks_by_offer_;
-            if ((!offer_by_price || !offer_by_id) && offer_by_price->empty()) return;
+            if ((!offer_by_price || !offer_by_id) && offer_by_price->empty()) return false;
             displace_existing_offers = price <= offer_by_price->begin()->first;
             break;
         }
         case OFFER::ASK: {
             offer_by_price = &bids_by_price_;
             offer_by_id = &bids_by_offer_;
-            if ((!offer_by_price || !offer_by_id) && offer_by_price->empty()) return;
+            if ((!offer_by_price || !offer_by_id) && offer_by_price->empty()) return false;
             displace_existing_offers = price >= offer_by_price->begin()->first;
             break;
         }
     }
+    return displace_existing_offers;
+}
 
+void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type,
+                                                    Price price,
+                                                    Count& quantity) noexcept {
+
+    std::map<Price, vector<OfferById>>* offer_by_price = nullptr;
+    std::map<OfferID, OfferByPrice>* offer_by_id = nullptr;
+
+    bool displace_existing_offers = set_offers_by_type(offer_type, offer_by_price, offer_by_id, price);
     while (!offer_by_price->empty() && displace_existing_offers && quantity) {
         Count count_diff {};
         
@@ -106,16 +113,7 @@ void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type,
             }
         }
 
-        switch(offer_type) {
-            case OFFER::BID: {
-                displace_existing_offers = price <= offer_by_price->begin()->first;
-                break;
-            }
-            case OFFER::ASK: {
-                displace_existing_offers = price >= offer_by_price->begin()->first;
-                break;
-            }
-        }
+        displace_existing_offers = set_offers_by_type(offer_type, offer_by_price, offer_by_id, price);
     }
 }
 
@@ -150,6 +148,7 @@ auto Level2BinaryTreeBase::get_offers_by_price(Price price) const noexcept -> st
 bool Level2BinaryTreeBase::get_offers_by_id(OfferID id, OfferByPrice*& v) noexcept {
     auto bid_offer = bids_by_offer_.find(id);
     auto ask_offer = asks_by_offer_.find(id);
+    //printf("Offer for [%llu] id\n", offer_id);
     if (bid_offer != bids_by_offer_.end()) {
         v = &bids_by_offer_.at(id);
     } else if (ask_offer != asks_by_offer_.end()) {
