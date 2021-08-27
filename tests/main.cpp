@@ -6,6 +6,9 @@
 
 constexpr int print_type{1};
 
+using namespace binary_tree_base;
+//using namespace hashtable_base;
+
 TEST(Test1, create_level2_and_add_some_orders_with_same_prices) {
     Level2Interface l2;
     l2.add_order(4, 50, OFFER::BID);

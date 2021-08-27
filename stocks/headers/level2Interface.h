@@ -4,6 +4,13 @@
 #include "level2BinaryTreeBase.h"
 #include "level2MultiIndexBase.h"
 
+using Price = uint64_t;     // price in cents but i guess i need to switch to something bigger to remove overflow issue
+using OfferID = uint64_t;   // id of offer. It
+using Count = uint64_t;
+
+using namespace binary_tree_base;
+//using namespace hashtable_base;
+
 class Level2Interface {
     //using level2 = Level2HashTableBase;
     using level2 = Level2BinaryTreeBase;

@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iomanip>
 
+namespace binary_tree_base {
+
 OfferID Level2BinaryTreeBase::add_order(Count quantity, Price price, OFFER offer_type) noexcept {
 
     if (offer_type == OFFER::BID) {    // выставляем на продажу
@@ -314,4 +316,6 @@ void Level2BinaryTreeBase::create_offer_structure(const nlohmann::basic_json<>& 
             }
         }
     }
+}
+
 }

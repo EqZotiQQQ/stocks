@@ -12,8 +12,8 @@ include_directories(
 
 add_library(stocks STATIC ${HEADERS} ${SOURCES})
 
-include_directories(${boostorg_SOURCE_DIR})
+#include_directories(${boostorg_SOURCE_DIR})
 
 target_link_libraries(stocks PUBLIC nlohmann_json::nlohmann_json)
 
-target_link_libraries(stocks PUBLIC Boost::multi_index)
+#target_link_libraries(stocks PUBLIC Boost::multi_index)
