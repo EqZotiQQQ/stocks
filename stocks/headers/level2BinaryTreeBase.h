@@ -6,8 +6,7 @@
 #include <functional>
 #include <cstdint>
 
-/*it's fucking disgusting*/
-#include "../../cmake-build-debug/_deps/json-src/include/nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
 
 enum class OFFER {BID, ASK};
 
