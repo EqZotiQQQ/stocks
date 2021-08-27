@@ -7,25 +7,21 @@
 OfferID Level2BinaryTreeBase::add_order(Count quantity, Price price, OFFER offer_type) noexcept {
 
     if (offer_type == OFFER::BID) {    // выставляем на продажу
-        exchange_existing_offers(offer_type, price, quantity);  // Нужно обменять аски, если наш бид ниже по цене
-        if (quantity) {     //  Если остались элементы, то добавляем их в биды
-            add_offer_to(bids_ordered_by_price_, bids_ordered_by_offer_, price, quantity, offer_id_);
-        }
+        Count bids_to_be_added = exchange_existing_offers(offer_type, price, quantity);  // Нужно обменять аски, если наш бид ниже по цене
+        add_offer_to(bids_ordered_by_price_, bids_ordered_by_offer_, price, bids_to_be_added, offer_id_);
     } else { // выставляем на покупку
-        exchange_existing_offers(offer_type, price, quantity); // наоборот :10
-        if (quantity) {     //  Если остались элементы, то добавляем их в аски
-            add_offer_to(asks_ordered_by_price_, asks_ordered_by_offer_, price, quantity, offer_id_);
-        }
+        Count asks_to_be_added = exchange_existing_offers(offer_type, price, quantity);
+        add_offer_to(asks_ordered_by_price_, asks_ordered_by_offer_, price, asks_to_be_added, offer_id_);
     }
-    return ++offer_id_;
+    return offer_id_++;
 }
 
-void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type, Price price, Count& quantity) noexcept {
+Count Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type, Price price, Count quantity) noexcept {
 
     std::map<Price, std::vector<OfferById>>* offers_ordered_by_price = nullptr;
     std::map<OfferID, OfferByPrice>* offers_ordered_by_id = nullptr;
     set_offers_by_type(offer_type, offers_ordered_by_price, offers_ordered_by_id);
-    if (!offers_ordered_by_price || !offers_ordered_by_id) return;
+    if (!offers_ordered_by_price || !offers_ordered_by_id) return quantity;
 
     while (!offers_ordered_by_price->empty() && compare_prices(offer_type, price, offers_ordered_by_price->begin()->first) && quantity) {
 
@@ -33,12 +29,12 @@ void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type, Price pric
 
         std::vector<OfferById>* offers_for_price = nullptr;
         if (!get_offers_by_price(offers_ordered_by_price->begin()->first, offers_for_price)) {
-            return;
+            break;
         }
 
         OfferByPrice* offerByPrice = nullptr;
         if (!get_offers_by_id(offers_for_price->front().offerId, offerByPrice)) {
-            return;
+            break;
         }
 
         OfferID id_key_to_be_removed = offers_for_price->front().offerId;
@@ -77,6 +73,7 @@ void Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type, Price pric
             }
         }
     }
+    return quantity;
 }
 
 // TODO: prob need to use set_offers_by_type to reduce number of args
@@ -85,13 +82,14 @@ void Level2BinaryTreeBase::add_offer_to(std::map<Price, std::vector<OfferById>>&
                                         Price price,
                                         Count quantity,
                                         OfferID id) noexcept {
-
-    auto order = offers_ordered_by_price.find(price);
-    if (order != offers_ordered_by_price.end()) {
-        offers_ordered_by_price.insert({price, {}});
+    if (quantity) {
+        auto order = offers_ordered_by_price.find(price);
+        if (order != offers_ordered_by_price.end()) {
+            offers_ordered_by_price.insert({price, {}});
+        }
+        offers_ordered_by_price[price].push_back({id, quantity});
+        offers_ordered_by_id.insert({id, {price, quantity}});
     }
-    offers_ordered_by_price[price].push_back({id, quantity});
-    offers_ordered_by_id.insert({id, {price, quantity}});
 }
 
 bool Level2BinaryTreeBase::get_offers_by_price(Price price, std::vector<OfferById>*& v) noexcept {
@@ -231,11 +229,11 @@ void Level2BinaryTreeBase::print_level2_by_idx() const noexcept {
     }
 }
 
-bool Level2BinaryTreeBase::compare_prices(OFFER offer_type, Price rhs, Price lhs) {
+bool Level2BinaryTreeBase::compare_prices(OFFER offer_type, Price minimum_bid_price, Price maximum_ask_price) {
     if (offer_type == OFFER::BID) {
-        return rhs <= lhs;
+        return minimum_bid_price <= maximum_ask_price;
     } else {
-        return rhs >= lhs;
+        return minimum_bid_price >= maximum_ask_price;
     }
 }
 

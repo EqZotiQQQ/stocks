@@ -18,7 +18,7 @@ using Count = uint64_t;
 struct OfferById {
     OfferID offerId;
     Count quantity;
-    bool operator=(const OfferById& rhs) {
+    bool operator==(const OfferById& rhs) {
         return offerId == rhs.offerId && quantity == rhs.quantity;
     }
 };
@@ -26,7 +26,7 @@ struct OfferById {
 struct OfferByPrice {
     Price price;
     Count quantity;
-    bool operator=(const OfferByPrice& rhs) {
+    bool operator==(const OfferByPrice& rhs) {
         return price == rhs.price && quantity == rhs.quantity;
     }
 };
@@ -88,9 +88,9 @@ private:
      * @param offer - это bid или ask
      * @param quantity - количество акций в оффере.
      */
-    void exchange_existing_offers(OFFER offer_type,
+    Count exchange_existing_offers(OFFER offer_type,
                                   Price price,
-                                  Count& quantity) noexcept;
+                                  Count quantity) noexcept;
 
     /**
      *
