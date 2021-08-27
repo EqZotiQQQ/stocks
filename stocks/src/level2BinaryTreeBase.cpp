@@ -23,12 +23,14 @@ Count Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type, Price pri
     set_offers_by_type(offer_type, offers_ordered_by_price, offers_ordered_by_id);
     if (!offers_ordered_by_price || !offers_ordered_by_id) return quantity;
 
-    while (!offers_ordered_by_price->empty() && compare_prices(offer_type, price, offers_ordered_by_price->begin()->first) && quantity) {
+    auto first_offer_for_price = offers_ordered_by_price->begin();
 
-        Count* quantity_for_offer = &offers_ordered_by_price->begin()->second.front().quantity; // cannot be null, checked in switch-case
+    while (!offers_ordered_by_price->empty() && compare_prices(offer_type, price, first_offer_for_price->first) && quantity) {
+
+        Count* quantity_for_offer = &first_offer_for_price->second.front().quantity; // cannot be null, checked in switch-case
 
         std::vector<OfferById>* offers_for_price = nullptr;
-        if (!get_offers_by_price(offers_ordered_by_price->begin()->first, offers_for_price)) {
+        if (!get_offers_by_price(first_offer_for_price->first, offers_for_price)) {
             break;
         }
 
@@ -72,6 +74,8 @@ Count Level2BinaryTreeBase::exchange_existing_offers(OFFER offer_type, Price pri
                 offers_ordered_by_price->erase(price_key_to_be_removed);
             }
         }
+
+        first_offer_for_price = offers_ordered_by_price->begin();
     }
     return quantity;
 }
