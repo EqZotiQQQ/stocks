@@ -2,6 +2,7 @@
 
 #include "level2HashTableBase.h"
 #include "level2BinaryTreeBase.h"
+#include "level2MultiIndexBase.h"
 
 class Level2Interface {
     //using level2 = Level2HashTableBase;

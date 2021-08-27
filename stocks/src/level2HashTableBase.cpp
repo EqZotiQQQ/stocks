@@ -113,5 +113,3 @@ auto Level2HashTableBase::get_l2_size() -> OfferID {
     }
     return size;
 }
-
-

@@ -4,7 +4,7 @@ project(stocks)
 
 set(HEADERS headers/level2HashTableBase.h headers/level2Interface.h headers/level2BinaryTreeBase.h headers/level2MultiIndexBase.h)
 
-set(SOURCES src/level2HashTableBase.cpp src/level2BinaryTreeBase.cpp)
+set(SOURCES src/level2HashTableBase.cpp src/level2BinaryTreeBase.cpp src/level2MultiIndexBase.cpp)
 
 include_directories(
         headers
