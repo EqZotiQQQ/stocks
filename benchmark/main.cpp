@@ -1,7 +1,5 @@
-#include "benchmark/benchmark.h"
-
 #include "OrderBook.h"
-
+#include "benchmark/benchmark.h"
 
 void add_asks(benchmark::State& state)
 {

@@ -1,24 +1,22 @@
 #pragma once
 
-#include <unordered_map>
-#include <unordered_set>
-#include <map>
-#include <set>
-#include <vector>
-
 #include <nlohmann/json.hpp>
 
-using Price = unsigned long long int;     // price in cents but i guess i need to switch to something bigger to remove overflow issue
-using OfferID = unsigned long long int;   // id of offer. It
+#include <map>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+using Price
+    = unsigned long long int; // price in cents but i guess i need to switch to something bigger to remove overflow issue
+using OfferID = unsigned long long int; // id of offer. It
 using Count = unsigned long long int;
 
 /***
  * offer type
  */
-enum class OFFER {
-    BID,
-    ASK
-};
+enum class OFFER { BID, ASK };
 
 /***
  * OrderBook that stores active offers.
@@ -29,7 +27,8 @@ enum class OFFER {
  * * facebook's stl analog
  * * self implemented data structures
  */
-class OrderBook {
+class OrderBook
+{
 public:
     /***
      * Place offer into level2
@@ -90,16 +89,16 @@ public:
     Count get_l2_size() const noexcept;
 
 private:
-
     /***
      * Helper object to keep ref on objects in private methods.
      * Because of asks and bids pretty similar big amount of code
      * can be removed using this helper class.
      */
-    struct OfferSupporter_t {
-        std::set<OfferID>&           offers_ordered_by_offer_id_;
-        std::map<Price, Count>&      offers_ordered_by_price_;
-        std::unordered_set<Price>&   unordered_offer_price_;
+    struct OfferSupporter_t
+    {
+        std::set<OfferID>& offers_ordered_by_offer_id_;
+        std::map<Price, Count>& offers_ordered_by_price_;
+        std::unordered_set<Price>& unordered_offer_price_;
     };
 
     // contains unique ids in order. Use them like keys
@@ -126,7 +125,6 @@ private:
 
     // offer_id. Might be overflowed and probably there should be used something that can't be overloaded.
     OfferID offer_id_{};
-
 
     /***
      * Fills out the structure depending on the type of order.
@@ -158,7 +156,7 @@ private:
      * unpack data from and push them to level2
      * @param json file
      */
-    void create_offer_structure(const nlohmann::basic_json<> &json) noexcept;
+    void create_offer_structure(const nlohmann::basic_json<>& json) noexcept;
 
     /***
      * closes the offer
@@ -168,6 +166,4 @@ private:
      * @return return number of offer then left after compensations opposite
      */
     Count close_order_helper(OfferID id, OfferSupporter_t orders, Count offer_quantity);
-
 };
-
