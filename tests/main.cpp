@@ -1,307 +1,293 @@
-#include "level2Interface.h"
+#include "OrderBook.h"
 
 #include "gtest/gtest.h"
 
 #include <iostream>
 
-constexpr int print_type{1};
+TEST(add_order, add_asks) {
+    OrderBook l2;
+    std::vector<OfferID> reference_data_ids;
+    std::vector<Price> reference_data_price;
+    std::vector<Count> reference_data_count;
 
-using namespace binary_tree_base;
-//using namespace hashtable_base;
-
-TEST(Test1, create_level2_and_add_some_orders_with_same_prices) {
-    Level2Interface l2;
-    l2.add_order(4, 50, OFFER::BID);
-    l2.add_order(2, 25, OFFER::BID);
-    l2.add_order(5, 72, OFFER::BID);
-    l2.add_order(1, 72, OFFER::BID);
-
-    std::vector<OfferById> test {{1, 2}};
-    std::vector<OfferById> subject = l2.get_offers_by_price(25);
-
-    ASSERT_EQ(l2.get_l2_size(), 12);
-    ASSERT_EQ(subject.size(), test.size());
-    for (int i = 0; i < test.size(); i++) {
-        ASSERT_EQ(subject[i].offerId, test[i].offerId);
-        ASSERT_EQ(subject[i].quantity, test[i].quantity);
+    for (int i = 0; i < 2000; i++) {
+        Price price = rand() % 3000 + 50;
+        Price quantity = rand() % 1000 + 40;
+        reference_data_ids.push_back(l2.add_order(OFFER::ASK, price, quantity));
+        reference_data_price.push_back(price);
+        reference_data_count.push_back(quantity);
     }
+    std::map<OfferID, std::pair<Price, Count>> subject = l2.pack_all_data();
 
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
+    ASSERT_EQ(l2.get_l2_size(), std::accumulate(reference_data_count.begin(), reference_data_count.end(), 0));
+    for (int i = 0; i < reference_data_ids.size(); i++) {
+        ASSERT_EQ(i, reference_data_ids[i]);
+        ASSERT_EQ(subject[i].first, reference_data_price[i]);
+        ASSERT_EQ(subject[i].second, reference_data_count[i]);
     }
 }
 
-TEST(Test1, add_bids_then_add_asks1) {
-    Level2Interface l2;
-    l2.add_order(10, 50, OFFER::BID); // goes to 7
-    l2.add_order(10, 25, OFFER::BID); // goes to 0
-    l2.add_order(10, 72, OFFER::BID); // goes to 10
+TEST(add_order, add_bids) {
+    OrderBook l2;
+    std::vector<OfferID> reference_data_ids;
+    std::vector<Price>   reference_data_price;
+    std::vector<Count>   reference_data_count;
 
-    l2.add_order(2, 35, OFFER::ASK);
-    l2.add_order(1, 50, OFFER::ASK);
-    l2.add_order(10, 65, OFFER::ASK);
-
-
-    std::vector<OfferById> test {{2, 10}};
-    std::vector<OfferById> subject = l2.get_offers_by_price(72);
-
-    ASSERT_EQ(l2.get_l2_size(), 17);
-    ASSERT_EQ(subject.size(), test.size());
-    for (int i = 0; i < test.size(); i++) {
-        ASSERT_EQ(subject[i].offerId, test[i].offerId);
-        ASSERT_EQ(subject[i].quantity, test[i].quantity);
+    for (int i = 0; i < 2000; i++) {
+        Price price = rand() % 3000 + 50;
+        Price quantity = rand() % 1000 + 40;
+        reference_data_ids.push_back(l2.add_order(OFFER::BID, price, quantity));
+        reference_data_price.push_back(price);
+        reference_data_count.push_back(quantity);
     }
+    std::map<OfferID, std::pair<Price, Count>> subject = l2.pack_all_data();
 
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
+    ASSERT_EQ(l2.get_l2_size(), std::accumulate(reference_data_count.begin(), reference_data_count.end(), 0));
+
+    for (int i = 0; i < reference_data_ids.size(); i++) {
+        ASSERT_EQ(i, reference_data_ids[i]);
+        ASSERT_EQ(subject[i].first, reference_data_price[i]);
+        ASSERT_EQ(subject[i].second, reference_data_count[i]);
     }
 }
 
-TEST(Test1, add_bids_then_add_asks2) {
-    Level2Interface l2;
-    l2.add_order(10, 50, OFFER::BID);
-    l2.add_order(10, 25, OFFER::BID);
-    l2.add_order(10, 72, OFFER::BID);
-    l2.add_order(11, 35, OFFER::ASK);
+TEST(add_order, add_offers_different_types) {
+    OrderBook l2;
+    l2.add_order(OFFER::BID, 50,  10 );
+    l2.add_order(OFFER::BID, 25,  10 );
+    l2.add_order(OFFER::BID, 72,  10 );
+    l2.add_order(OFFER::ASK, 50,  115);
+    l2.add_order(OFFER::ASK, 35,  11 );
+    l2.add_order(OFFER::ASK, 50,  200);
 
-    std::vector<OfferById> test {{2, 10}};
-    std::vector<OfferById> subject = l2.get_offers_by_price(72);
+    std::map<OfferID, std::pair<Price, Count>> subject = l2.pack_all_data();
+    std::map<OfferID, std::pair<Price, Count>> reference_data {
+        {2, {72, 10}},
+        {3, {50, 95}},
+        {4, {35, 11}},
+        {5, {50, 200}},
+    };
 
-    ASSERT_EQ(l2.get_l2_size(), 21);
-    ASSERT_EQ(subject.size(), test.size());
-    for (int i = 0; i < test.size(); i++) {
-        ASSERT_EQ(subject[i].offerId, test[i].offerId);
-        ASSERT_EQ(subject[i].quantity, test[i].quantity);
-    }
+    ASSERT_EQ(l2.get_l2_size(), 316);
 
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
-    }
-}
-
-TEST(Test1, add_bids_then_add_asks3) {
-    Level2Interface l2;
-    l2.add_order(10, 50, OFFER::BID);
-    l2.add_order(10, 25, OFFER::BID);
-    l2.add_order(10, 72, OFFER::BID);
-    l2.add_order(11, 65, OFFER::ASK);
-
-    std::vector<OfferById> test {{0, 9}};
-    std::vector<OfferById> subject = l2.get_offers_by_price(50);
-    ASSERT_EQ(l2.get_l2_size(), 19);
-    ASSERT_EQ(subject.size(), test.size());
-    for (int i = 0; i < test.size(); i++) {
-        ASSERT_EQ(subject[i].offerId, test[i].offerId);
-        ASSERT_EQ(subject[i].quantity, test[i].quantity);
-    }
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
+    for (int i = 0; i < reference_data.size(); i++) {
+        ASSERT_EQ(subject[i].first, reference_data[i].first);
+        ASSERT_EQ(subject[i].second, reference_data[i].second);
     }
 }
 
-TEST(Test1, add_bids_then_add_asks4) {
-    Level2Interface l2;
-    l2.add_order(10, 50, OFFER::BID);
-    l2.add_order(10, 25, OFFER::BID);
-    l2.add_order(10, 72, OFFER::BID);
-    l2.add_order(110, 80, OFFER::ASK);
-    ASSERT_EQ(l2.get_l2_size(), 80);
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
+TEST(close_order, close_ask) {
+    OrderBook l2;
+    std::vector<OfferID> reference_data_ids;
+    std::vector<Price> reference_data_price;
+    std::vector<Count> reference_data_count;
+
+    for (int i = 0; i < 2000; i++) {
+        Price price = rand() % 3000 + 50;
+        Price quantity = rand() % 1000 + 40;
+        reference_data_ids.push_back(l2.add_order(OFFER::ASK, price, quantity));
+        reference_data_price.push_back(price);
+        reference_data_count.push_back(quantity);
+    }
+
+    ASSERT_EQ(l2.get_l2_size(), std::accumulate(reference_data_count.begin(), reference_data_count.end(), 0));
+
+    ASSERT_TRUE(l2.close_order(reference_data_ids[1   ], reference_data_count[1   ]));
+    ASSERT_TRUE(l2.close_order(reference_data_ids[5   ], reference_data_count[5   ]));
+    ASSERT_TRUE(l2.close_order(reference_data_ids[265 ], reference_data_count[265 ]));
+    ASSERT_TRUE(l2.close_order(reference_data_ids[1000], reference_data_count[1000]));
+    ASSERT_TRUE(l2.close_order(reference_data_ids[1999], reference_data_count[1999]));
+}
+
+TEST(close_order, close_bid) {
+    OrderBook l2;
+    std::vector<OfferID> reference_data_ids;
+    std::vector<Price> reference_data_price;
+    std::vector<Count> reference_data_count;
+
+    for (int i = 0; i < 2000; i++) {
+        Price price = rand() % 3000 + 50;
+        Price quantity = rand() % 1000 + 40;
+        reference_data_ids.push_back(l2.add_order(OFFER::BID, price, quantity));
+        reference_data_price.push_back(price);
+        reference_data_count.push_back(quantity);
+    }
+
+    ASSERT_EQ(l2.get_l2_size(), std::accumulate(reference_data_count.begin(), reference_data_count.end(), 0));
+
+    ASSERT_TRUE(l2.close_order(reference_data_ids[1   ], reference_data_count[1   ]));
+    ASSERT_TRUE(l2.close_order(reference_data_ids[5   ], reference_data_count[5   ]));
+    ASSERT_TRUE(l2.close_order(reference_data_ids[265 ], reference_data_count[265 ]));
+    ASSERT_TRUE(l2.close_order(reference_data_ids[1000], reference_data_count[1000]));
+    ASSERT_TRUE(l2.close_order(reference_data_ids[1999], reference_data_count[1999]));
+}
+
+TEST(close_order, close_bid_2) {
+    OrderBook l2;
+    std::vector<OfferID> reference_data_ids;
+    std::vector<Price>   reference_data_price;
+    std::vector<Count>   reference_data_count;
+
+    for (int i = 0; i < 200; i++) {
+        Price price = 1; //rand() % 1 + 50;
+        Price quantity = rand() % 30 + 40;
+        reference_data_ids.push_back(l2.add_order(OFFER::BID, price, quantity));
+        reference_data_price.push_back(price);
+        reference_data_count.push_back(quantity);
+    }
+    std::map<OfferID, std::pair<Price, Count>> subject = l2.pack_all_data();
+
+    ASSERT_EQ(l2.get_l2_size(), std::accumulate(reference_data_count.begin(), reference_data_count.end(), 0));
+
+    for (int i = 0; i < reference_data_ids.size(); i++) {
+        l2.close_order(reference_data_ids[i], reference_data_count[i]);
     }
 }
 
-TEST(Test1, add_bids_then_add_asks5) {
-    Level2Interface l2;
-    l2.add_order(10, 50, OFFER::BID);
-    l2.add_order(10, 25, OFFER::BID);
-    l2.add_order(10, 72, OFFER::BID);
-    l2.add_order(110, 80, OFFER::ASK);
-    l2.add_order(30, 90, OFFER::BID);
-    l2.add_order(40, 30, OFFER::BID);
-    l2.add_order(30, 90, OFFER::ASK);
-    l2.add_order(40, 80, OFFER::BID);
+TEST(close_order, close_bid_fail_1) {
+    OrderBook l2;
+    Count quantity = 10;
 
+    OfferID id = l2.add_order(OFFER::BID, 50, quantity);
+
+    ASSERT_FALSE(l2.close_order(id, 20));
+}
+
+TEST(close_order, close_bid_fail_2) {
+    OrderBook l2;
+
+    ASSERT_FALSE(l2.close_order(10, 20));
+}
+
+TEST(close_order, close_ask_fail_1) {
+    OrderBook l2;
+
+    Count quantity = 10;
+    l2.add_order(OFFER::BID, 50, quantity);
+
+    ASSERT_FALSE(l2.close_order(10, 20));
+}
+
+TEST(close_order, close_ask_fail_2) {
+    OrderBook l2;
+
+    ASSERT_FALSE(l2.close_order(10, 20));
+}
+
+TEST(get_offers_by_price, get_prices) {
+    OrderBook l2;
+    std::vector<OfferID> reference_data_ids;
+    std::vector<Price> reference_data_price;
+    std::set<OfferID>* ids = nullptr;
+    for (int i = 0; i < 3000; i++) {
+        Price price = rand() % 300 + 50;
+        Price quantity = rand() % 100 + 40;
+        reference_data_ids.push_back(l2.add_order(OFFER::ASK, price, quantity));
+        reference_data_price.push_back(price);
+    }
+    Price price_ref = reference_data_price.back();
+    std::vector<OfferID> test_data;
+    for (int i = 0; i < reference_data_ids.size(); i++) {
+        if (price_ref == reference_data_price[i]) {
+            test_data.push_back(i);
+        }
+    }
+
+    l2.get_offers_by_price(price_ref, ids);
+
+    auto sampliter = test_data.begin();
+    for (auto subjiter = ids->begin(); subjiter != ids->end(); subjiter++, sampliter++) {
+        ASSERT_EQ(*sampliter, *subjiter);
+    }
+}
+
+TEST(get_offers_by_price, get_prices_failure) {
+    OrderBook l2;
+    std::set<OfferID>* subject = nullptr;
+
+    ASSERT_FALSE(l2.get_offers_by_price(0, subject));
     ASSERT_EQ(l2.get_l2_size(), 0);
-
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
-    }
 }
 
-TEST(Test1, add_bids_then_add_asks6) {
-    Level2Interface l2;
-    l2.add_order(10, 50, OFFER::BID);
-    l2.add_order(10, 25, OFFER::BID);
-    l2.add_order(10, 72, OFFER::BID);
-    l2.add_order(2, 10, OFFER::ASK);
-    l2.add_order(1, 5, OFFER::ASK);
-    l2.store();
+TEST(get_offer_by_id, get_ids1) {
+    OrderBook l2;
+    l2.add_order(OFFER::BID, 50, 10);
+    std::pair<Price, Count> sample {50, 10};
 
-    Level2Interface l2_1;
-    l2_1.load();
+    std::pair<Price, Count> subject = l2.get_offer_by_id(0);
 
-    std::vector<OfferById> test {{0, 10}};
-    std::vector<OfferById> subject = l2.get_offers_by_price(50);
-
-    ASSERT_EQ(l2.get_l2_size(), 33);
-    ASSERT_EQ(subject.size(), test.size());
-
-    for (int i = 0; i < test.size(); i++) {
-        ASSERT_EQ(subject[i].offerId, test[i].offerId);
-        ASSERT_EQ(subject[i].quantity, test[i].quantity);
-    }
-
-    switch(print_type) {
-        case 1: l2_1.print_level2_by_price(); break;
-        case 2: l2_1.print_level2_by_idx(); break;
-    }
-}
-
-TEST(Test1, add_bids_then_add_asks7) {
-    Level2Interface l2;
-    OfferID id0 = l2.add_order(10, 50, OFFER::BID);
-    OfferID id1 = l2.add_order(10, 25, OFFER::BID);
-    OfferID id2 = l2.add_order(10, 72, OFFER::BID);
-    OfferID id3 = l2.add_order(10, 150, OFFER::BID);
-    OfferID id4 = l2.add_order(110, 80, OFFER::ASK);
-
-    std::vector<OfferById> test{{4, 80}};
-    std::vector<OfferById>* subject = nullptr;
-
-    l2.get_offers_by_price(80, subject);
-    std::vector<OfferById> t2 = l2.get_offers_by_price(80);
-
-    ASSERT_EQ(l2.get_l2_size(), 90);
-    ASSERT_EQ(subject->size(), test.size());
-    for (int i = 0; i < subject->size(); i++) {
-        ASSERT_EQ(subject->at(i).offerId, test[i].offerId);
-        ASSERT_EQ(subject->at(i).quantity, test[i].quantity);
-    }
-
-    OfferByPrice* subject2 = nullptr;
-    auto test_pair = std::make_pair(150,10);
-    l2.get_offers_by_id(3, subject2);
-
-    ASSERT_TRUE(subject2);
-    ASSERT_EQ(subject2->price, test_pair.first);
-    ASSERT_EQ(subject2->quantity, test_pair.second);
-
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
-    }
-}
-
-TEST(Test2, close_order1) {
-    Level2Interface l2;
-    l2.add_order(10, 50, OFFER::BID);
-    ASSERT_TRUE(l2.close_order(5, 0));
-    ASSERT_EQ(l2.get_l2_size(), 5);
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
-    }
-}
-
-TEST(Test2, close_order2) {
-    Level2Interface l2;
-    l2.add_order(10, 50, OFFER::BID);
     ASSERT_EQ(l2.get_l2_size(), 10);
-    ASSERT_FALSE(l2.close_order(15, 0));
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
-    }
+    ASSERT_EQ(subject, sample);
 }
 
-TEST(Test2, close_order3) {
-    Level2Interface l2;
-    l2.add_order(10, 50, OFFER::BID);
-    ASSERT_TRUE(l2.close_order(5, 0));
-    ASSERT_TRUE(l2.close_order(5, 0));
-    ASSERT_FALSE(l2.close_order(5, 0));
-    ASSERT_FALSE(l2.close_order(5, 5));
+TEST(get_offer_by_id, get_ids2) {
+    OrderBook l2;
+    std::pair<Price, Count> sample {0, 0};
+
+    auto subject = l2.get_offer_by_id(0);
+
+    ASSERT_EQ(subject, sample);
     ASSERT_EQ(l2.get_l2_size(), 0);
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
-    }
+
 }
 
-TEST(Test3, get_prices1) {
-    Level2Interface l2;
-    l2.add_order(10, 50, OFFER::BID);
-    std::vector<OfferById> v = l2.get_offers_by_price(50);
-    ASSERT_EQ(v.front().offerId, 0);
-    ASSERT_EQ(v.front().quantity, 10);
-    ASSERT_EQ(l2.get_l2_size(), 10);
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
-    }
-}
+TEST(get_l2_size, get_number_of_l2) {
+    OrderBook l2;
+    l2.add_order(OFFER::BID, 50, 10);
+    l2.add_order(OFFER::BID, 20, 15);
 
-TEST(Test3, get_prices2) {
-    Level2Interface l2;
-    std::vector<OfferById> v = l2.get_offers_by_price(0);
-    ASSERT_EQ(v.size(), 0);
-    ASSERT_EQ(l2.get_l2_size(), 0);
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
-    }
-}
-
-TEST(Test4, get_ids1) {
-    Level2Interface l2;
-    l2.add_order(10, 50, OFFER::BID);
-    OfferByPrice v = l2.get_offers_by_id(0);
-    ASSERT_EQ(v.price, 50);
-    ASSERT_EQ(v.quantity, 10);
-    ASSERT_EQ(l2.get_l2_size(), 10);
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
-    }
-}
-
-TEST(Test4, get_ids2) {
-    Level2Interface l2;
-    OfferByPrice v = l2.get_offers_by_id(0);
-    ASSERT_EQ(v.price, 0);
-    ASSERT_EQ(v.quantity, 0);
-    ASSERT_EQ(l2.get_l2_size(), 0);
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
-    }
-}
-
-TEST(Test5, get_size1) {
-    Level2Interface l2;
-    l2.add_order(10, 50, OFFER::BID);
-    l2.add_order(15, 20, OFFER::BID);
     ASSERT_EQ(l2.get_l2_size(), 25);
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
-    }
 }
 
-TEST(Test5, get_size2) {
-    Level2Interface l2;
+TEST(get_l2_size, get_number_of_empty_l2) {
+    OrderBook l2;
+
     ASSERT_EQ(l2.get_l2_size(), 0);
-    switch(print_type) {
-        case 1: l2.print_level2_by_price(); break;
-        case 2: l2.print_level2_by_idx(); break;
+}
+
+TEST(store, store_json_test) {
+    OrderBook l2;
+
+    std::vector<OfferID> reference_data_ids;
+    std::vector<Price>   reference_data_price;
+    std::vector<Count>   reference_data_count;
+
+    for (int i = 0; i < 2000; i++) {
+        Price price = rand() % 3000 + 50;
+        Price quantity = rand() % 1000 + 40;
+        reference_data_ids.push_back(l2.add_order(OFFER::BID, price, quantity));
+        reference_data_price.push_back(price);
+        reference_data_count.push_back(quantity);
     }
+
+    ASSERT_TRUE(l2.store());
+}
+
+TEST(load, load_json_test) {
+    OrderBook l2;
+
+    ASSERT_TRUE(l2.load());
+    ASSERT_TRUE(l2.store("load_json_test.json"));
+}
+
+TEST(load, load_json_test_failure) {
+    OrderBook l2;
+
+    ASSERT_FALSE(l2.load("some_name.json"));
+}
+
+TEST(trade, trade) {
+    OrderBook l2;
+    for (int i = 0; i < 200000; i++) {
+        Price price = rand() % 3000 + 50;
+        Price quantity = rand() % 1000 + 40;
+        if (i % 2 == 0) {
+            l2.add_order(OFFER::ASK, price, quantity);
+        } else {
+            l2.add_order(OFFER::BID, price, quantity);
+        }
+    }
+    l2.store();
 }
 
 int main(int argc, char** argv)

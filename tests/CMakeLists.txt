@@ -1,10 +1,8 @@
-project(stock_tests)
+project(stocks_tests)
 
-message("test stocks...")
-
-add_executable(stock_tests main.cpp)
+add_executable(stocks_tests main.cpp)
 
 include_directories(../stocks/headers)
 
-target_link_libraries(stock_tests stocks)
-target_link_libraries(stock_tests gtest gtest_main)
+target_link_libraries(stocks_tests stocks)
+target_link_libraries(stocks_tests gtest gtest_main)
