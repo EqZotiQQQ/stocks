@@ -19,3 +19,5 @@ add_subdirectory(stocks)
 add_subdirectory(tests)
 # google benchmarks
 add_subdirectory(benchmark)
+# google stl analog
+add_subdirectory(3rdparty/abseil-cpp)

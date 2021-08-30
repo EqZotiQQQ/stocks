@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 
+
 OfferID OrderBook::add_order(OFFER offer_type, Price price, Count quantity) noexcept {
     quantity = exchange_offers(offer_type, price, quantity);
     add_offer_to(offer_type, price, quantity, offer_id_);
