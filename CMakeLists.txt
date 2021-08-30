@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(stocks)
+project(stocks-stl)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -11,7 +11,10 @@ include(json)  # execute this .cmake. It contains nlohmann_json.
 include(cppcheck)
 include(clang-format)
 
-add_subdirectory(stocks)
+
+
+add_subdirectory(stock-abseil-impl)
+# add_subdirectory(stocks-stl)
 
 
 

@@ -52,14 +52,14 @@ public:
      * @param name name of json file
      * @return success of operation
      */
-    bool store(const std::string& name = "stocks.json") const noexcept;
+    bool store(const std::string& name = "stocks-stl.json") const noexcept;
 
     /***
      * load snapshot from file
      * @param name file load from
      * @return success of operation
      */
-    bool load(const std::string& name = "stocks.json") noexcept;
+    bool load(const std::string& name = "stocks-stl.json") noexcept;
 
     /***
      * get as parameter set of offers id filtered by price
