@@ -8,14 +8,15 @@ TEST(add_bid, add_bid) {
     std::vector<Price> reference_data_price;
     std::vector<Qty> reference_data_count;
 
-    for (int i = 0; i < 2000; i++) {
+    for (int i = 0; i < 5; i++) {
         Price price = rand() % 3000 + 50;
         Price quantity = rand() % 1000 + 40;
         reference_data_ids.push_back(l2.add_order(Offer::ASK, price, quantity));
         reference_data_price.push_back(price);
         reference_data_count.push_back(quantity);
     }
-    l2.print_offers();
+//    l2.print_offers_ordered_by_id();
+    l2.print_offers_ordered_by_price();
 //    std::map<OfferId, std::pair<Price, Qty>> subject = l2.pack_all_data();
 
 //    ASSERT_EQ(l2.get_l2_size(), std::accumulate(reference_data_count.begin(), reference_data_count.end(), 0));

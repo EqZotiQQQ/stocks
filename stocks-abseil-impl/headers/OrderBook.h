@@ -4,7 +4,7 @@
 #include <absl/container/btree_set.h>
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
-#include <absl/strings/str_format.h>
+#include "absl/strings/str_format.h"
 
 using OfferId = uint64_t;
 using Price = uint64_t;
@@ -16,8 +16,8 @@ enum class Offer {
 };
 
 struct PriceQty {
-    Price price;
-    Qty qty;
+    Price price {};
+    Qty qty {};
     Offer type;
 };
 
@@ -39,12 +39,13 @@ private:
     absl::flat_hash_map<Price, std::vector<OfferId>> price_to_id_;
 
 
-    OfferId offer_id_;
+    OfferId offer_id_ {};
 
-    void add_offer_to(Offer offer_type, Price price, Qty quantity, OfferId id);
-    Qty exchange_offers(Offer offer_type, Price offer_price, Qty offer_quantity);
+    void add_order_to(Offer offer_type, Price price, Qty quantity, OfferId id);
+    Qty exchange_orders(Offer offer_type, Price offer_price, Qty offer_quantity);
 public:
     OfferId add_order(Offer offer_type, Price price, Qty quantity);
 
-    void print_offers() const;
+    void print_offers_ordered_by_id() const;
+    void print_offers_ordered_by_price();
 };
