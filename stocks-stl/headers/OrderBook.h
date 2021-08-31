@@ -8,8 +8,7 @@
 #include <unordered_set>
 #include <vector>
 
-using Price
-    = unsigned long long int; // price in cents but i guess i need to switch to something bigger to remove overflow issue
+using Price = unsigned long long int; // price in cents but i guess i need to switch to something bigger to remove overflow issue
 using OfferID = unsigned long long int; // id of offer. It
 using Count = unsigned long long int;
 
