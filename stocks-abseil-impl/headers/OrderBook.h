@@ -1,17 +1,14 @@
 #pragma once
 
-#include "Asks.h"
-#include "Bids.h"
-
+#include "Order.h"
 #include "absl/strings/str_format.h"
+
 #include <absl/container/btree_map.h>
 #include <absl/container/btree_set.h>
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 #include <absl/types/optional.h>
-
 #include <nlohmann/json.hpp>
-
 
 enum class Offer {
     BID,
@@ -30,8 +27,7 @@ struct PriceQty {
 
 class OrderBookAbseil {
 private:
-    Bids bids_;
-    Asks asks_;
+    Orders bids_, asks_;
 
     // provides O(1) access to count
     absl::flat_hash_map<OfferId, PriceQty> offers_data_;    // id -> full order info
@@ -51,7 +47,7 @@ public:
     bool close_order(OfferId id, Qty quantity);
     Qty get_l2_size() const;
 
-    absl::optional<PriceQty> get_offers_by_id_(OfferId id);
+    absl::optional<PriceQty> get_order_by_id(OfferId id);
     absl::optional<std::vector<OfferId>> get_offers_by_price(Price price);
 
     bool store(const std::string& name = "abseil_order_book_data.json");

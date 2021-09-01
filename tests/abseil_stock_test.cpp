@@ -208,7 +208,7 @@ TEST(get_offer_by_id, get_ids1)
         .qty = 10,
         .type = Offer::BID
     };
-    absl::optional<PriceQty> subject = l2.get_offers_by_id_(id);
+    absl::optional<PriceQty> subject = l2.get_order_by_id(id);
     ASSERT_TRUE(subject.has_value());
     ASSERT_EQ(l2.get_l2_size(), 10);
     ASSERT_EQ(subject.value(), sample);
@@ -218,7 +218,7 @@ TEST(get_offer_by_id, get_ids2)
 {
     OrderBookAbseil l2;
 
-    absl::optional<PriceQty> subject = l2.get_offers_by_id_(0);
+    absl::optional<PriceQty> subject = l2.get_order_by_id(0);
 
     ASSERT_FALSE(subject.has_value());
     ASSERT_EQ(l2.get_l2_size(), 0);
@@ -248,7 +248,7 @@ TEST(store, store_json_test)
     std::vector<Price> reference_data_price;
     std::vector<Qty> reference_data_count;
 
-    for (int i = 0; i < 2000; i++) {
+    for (int i = 0; i < 5000; i++) {
         Price price = rand() % 3000 + 50;
         Price quantity = rand() % 1000 + 40;
         reference_data_ids.push_back(l2.add_order(Offer::BID, price, quantity));
@@ -264,10 +264,41 @@ TEST(load, load_json_test)
     OrderBookAbseil l2;
 
     ASSERT_TRUE(l2.load());
-
-//    l2.print_offers_ordered_by_id();
-    l2.print_offers_ordered_by_price();
     ASSERT_TRUE(l2.store("load_json_test.json"));
+}
+
+TEST(load, load_json_test_failure)
+{
+    OrderBookAbseil l2;
+
+    ASSERT_FALSE(l2.load("some_name.json"));
+}
+
+TEST(store, store_load_json_test)
+{
+    OrderBookAbseil l2;
+
+    for (int i = 0; i < 5000; i++) {
+        Price price = rand() % 3000 + 50;
+        Price quantity = rand() % 1000 + 40;
+        l2.add_order(Offer::BID, price, quantity);
+    }
+    ASSERT_TRUE(l2.store());
+
+    OrderBookAbseil l2_test;
+    ASSERT_TRUE(l2_test.load());
+
+    absl::flat_hash_map<OfferId, PriceQty> l2_data = l2.pack_all_data();
+    absl::flat_hash_map<OfferId, PriceQty> l2_test_data = l2_test.pack_all_data();
+
+    ASSERT_EQ(l2.get_l2_size(), l2_test.get_l2_size());
+
+    for (int i = 0; i < l2_data.size(); i++) {
+        ASSERT_EQ(l2_data[i].price, l2_test_data[i].price);
+        ASSERT_EQ(l2_data[i].qty, l2_test_data[i].qty);
+        ASSERT_EQ(l2_data[i].type, l2_test_data[i].type);
+    }
+
 }
 
 int main(int argc, char** argv)

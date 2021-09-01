@@ -14,11 +14,11 @@ CheckOptions:
   - key: readability-identifier-naming.StructCase
     value: CamelCase
   - key: readability-identifier-naming.TypedefCase
-    value: CamelCase
+    value: lower_case
   - key: readability-identifier-naming.TypeAliasCase
-    value: CamelCase
+    value: lower_case
   - key: readability-identifier-naming.FunctionCase
-    value: CamelCase
+    value: lower_case
   - key: readability-identifier-naming.ParameterCase
     value: lower_case
   - key: readability-identifier-naming.VariableCase
@@ -28,19 +28,19 @@ CheckOptions:
   - key: readability-identifier-naming.PrivateMemberSuffix
     value: '_'
   - key: readability-identifier-naming.GlobalConstantCase
-    value: CamelCase
+    value: lower_case
   - key: readability-identifier-naming.GlobalConstantPrefix
     value: k
   - key: readability-identifier-naming.StaticConstantCase
-    value: CamelCase
+    value: lower_case
   - key: readability-identifier-naming.StaticConstantPrefix
     value: k
   - key: readability-identifier-naming.ConstexprVariableCase
-    value: CamelCase
+    value: lower_case
   - key: readability-identifier-naming.ConstexprVariablePrefix
     value: k
   - key: readability-identifier-naming.TypeTemplateParameterCase
-    value: CamelCase
+    value: lower_case
   - key: readability-simplify-boolean-expr.ChainedConditionalReturn
     value: '1'
   - key: readability-simplify-boolean-expr.ChainedConditionalAssignment
