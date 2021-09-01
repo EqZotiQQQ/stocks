@@ -16,7 +16,7 @@ include(clang-format)
 
 
 add_subdirectory(stocks-abseil-impl)
-#add_subdirectory(stocks-stl)
+add_subdirectory(stocks-stl)
 
 
 
