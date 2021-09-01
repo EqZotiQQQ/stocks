@@ -16,6 +16,8 @@ TEST(add_order, add_bid) {
         reference_data_count.push_back(quantity);
     }
 
+    l2.print_offers_ordered_by_price();
+
     absl::flat_hash_map<OfferId, PriceQty> subject = l2.pack_all_data();
 
     ASSERT_EQ(l2.get_l2_size(), std::accumulate(reference_data_count.begin(), reference_data_count.end(), 0));
@@ -57,6 +59,7 @@ TEST(add_order, add_offers_different_types)
     l2.add_order(Offer::BID, 50, 10);
     l2.add_order(Offer::BID, 25, 10);
     l2.add_order(Offer::BID, 72, 10);
+
     l2.add_order(Offer::ASK, 50, 115);
     l2.add_order(Offer::ASK, 35, 11);
     l2.add_order(Offer::ASK, 50, 200);
@@ -181,19 +184,20 @@ TEST(get_offers_by_price, get_prices)
         }
     }
 
-    absl::optional<std::vector<OfferId>> ids = l2.get_offers_by_price(price_ref);
+    absl::optional<absl::btree_set<OfferId>> ids = l2.get_offers_by_price(price_ref);
 
     ASSERT_TRUE(ids.has_value());
 
-    for (int i = 0; i < ids->size(); i++) {
-        ASSERT_EQ(ids->at(i), test_data[i]);
+    auto iter = ids->begin();
+    for (int i = 0; i < ids->size(); i++, iter++) {
+        ASSERT_EQ(*iter, test_data[i]);
     }
 }
 
 TEST(get_offers_by_price, get_prices_failure)
 {
     OrderBookAbseil l2;
-    absl::optional<std::vector<OfferId>> subject = l2.get_offers_by_price(0);
+    absl::optional<absl::btree_set<OfferId>> subject = l2.get_offers_by_price(0);
 
     ASSERT_FALSE(subject.has_value());
     ASSERT_EQ(l2.get_l2_size(), 0);
@@ -206,7 +210,6 @@ TEST(get_offer_by_id, get_ids1)
     PriceQty sample{
         .price = 50,
         .qty = 10,
-        .type = Offer::BID
     };
     absl::optional<PriceQty> subject = l2.get_order_by_id(id);
     ASSERT_TRUE(subject.has_value());
@@ -296,7 +299,6 @@ TEST(store, store_load_json_test)
     for (int i = 0; i < l2_data.size(); i++) {
         ASSERT_EQ(l2_data[i].price, l2_test_data[i].price);
         ASSERT_EQ(l2_data[i].qty, l2_test_data[i].qty);
-        ASSERT_EQ(l2_data[i].type, l2_test_data[i].type);
     }
 
 }
