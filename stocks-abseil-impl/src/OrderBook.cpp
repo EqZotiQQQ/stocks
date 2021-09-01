@@ -5,8 +5,8 @@
 #include <iostream>
 
 OrderBookAbseil::OrderBookAbseil() {
-    asks_.type_ = Offer::ASK;
-    bids_.type_ = Offer::BID;
+    asks_.type_ = "ask";
+    bids_.type_ = "bid";
 }
 
 OfferId OrderBookAbseil::add_order(Offer order_type, Price price, Qty quantity) {
@@ -22,7 +22,7 @@ OfferId OrderBookAbseil::add_order(Offer order_type, Price price, Qty quantity) 
 
 void OrderBookAbseil::add_order_to(Orders& orders, Price price, Qty quantity, OfferId id) {
     if (quantity != 0u) {
-        orders.by_offer_id_.insert(id);
+        orders.by_id_.insert(id);
         if (price_to_id_.contains(price)) {
             orders.by_price_[price]++;
             price_to_id_[price].insert(id);
@@ -36,7 +36,7 @@ void OrderBookAbseil::add_order_to(Orders& orders, Price price, Qty quantity, Of
 }
 
 Qty OrderBookAbseil::exchange_orders(Orders& orders, Price order_price, Qty qty) {
-    if (qty == 0 || orders.by_offer_id_.empty()) {
+    if (qty == 0 || orders.by_id_.empty()) {
         return qty;
     }
 
@@ -44,9 +44,9 @@ Qty OrderBookAbseil::exchange_orders(Orders& orders, Price order_price, Qty qty)
     OfferId target_id;
     Qty target_qty;
 
-    bool exchange_condition {};
+    bool exchange_condition;
 
-    if (orders.type_ == Offer::BID) {
+    if (orders.type_ == "bid") {
         target_price =   bids_.by_price_.begin()->first;
         target_id =      *price_to_id_[target_price].begin();
         target_qty =     offers_data_[target_id].qty;
@@ -63,11 +63,10 @@ Qty OrderBookAbseil::exchange_orders(Orders& orders, Price order_price, Qty qty)
             offers_data_[target_id].qty -= qty;
             order_size_ -= qty;
         } else {
-            --orders.by_price_[target_price];
-            orders.by_offer_id_.erase(target_id);
+            orders.by_id_.erase(target_id);
             qty -= target_qty;
             offers_data_.erase(target_id);
-            if (orders.by_price_[target_price] == 0) {
+            if (--orders.by_price_[target_price] == 0) {
                 orders.by_price_.erase(target_price);
                 price_to_id_.erase(target_price);
             }
@@ -77,23 +76,6 @@ Qty OrderBookAbseil::exchange_orders(Orders& orders, Price order_price, Qty qty)
         return qty;
     }
     return exchange_orders(orders, order_price, qty);
-}
-
-void OrderBookAbseil::print_offers_ordered_by_price() {
-    auto damn = {&bids_, &asks_};
-    for (const auto& offer: damn) {
-        for (auto price_iter = offer->by_price_.begin(); price_iter != offer->by_price_.end(); price_iter++) {
-            Price price = price_iter->first;
-            absl::btree_set<OfferId> ids_by_price = price_to_id_.at(price);
-            std::string ids = "";
-            Qty total_qty_by_price{};
-            for (OfferId id : ids_by_price) {
-                ids = absl::StrFormat("%s[%u]", ids, id);
-                total_qty_by_price += offers_data_[id].qty;
-            }
-            printf("Price: [%u]; Ids: [%s]; Qty: [%d]\n", price, ids.c_str(), total_qty_by_price);
-        }
-    }
 }
 
 absl::flat_hash_map<OfferId, PriceQty> OrderBookAbseil::pack_all_data() {
@@ -111,14 +93,13 @@ bool OrderBookAbseil::close_order(OfferId id, Qty quantity) {
             printf("Failed to close %llu order. Available %llu while you tried to close %llu.\n", id, offers_data_[id].qty, quantity);
             return false;
         }
-        Orders& orders = bids_.by_offer_id_.contains(id) ? bids_: asks_;
+        Orders& orders = bids_.by_id_.contains(id) ? bids_: asks_;
 
         if (quantity == offers_data_[id].qty) {
             Price order_price = offers_data_[id].price;
-            absl::btree_set<OfferId> ids = price_to_id_[order_price];
             price_to_id_[order_price].erase(id);
             offers_data_.erase(id);
-            orders.by_offer_id_.erase(id);
+            orders.by_id_.erase(id);
             if (price_to_id_[order_price].empty()) {
                 price_to_id_.erase(order_price);
                 orders.by_price_.erase(order_price);
@@ -153,10 +134,9 @@ bool OrderBookAbseil::store(const std::string& name) {
             absl::btree_set<OfferId> ids_by_same_price = get_offers_by_price(id_by_price->first).value();
             for (auto id: ids_by_same_price) {
                 nlohmann::json offers_by_price;
-                std::string type = offer->type_==Offer::BID?"bid":"ask";
-                offers_by_price[type]["id"] = id;
-                offers_by_price[type]["price"] = offers_data_[id].price;
-                offers_by_price[type]["quantity"] = offers_data_[id].qty;
+                offers_by_price[offer->type_]["id"] = id;
+                offers_by_price[offer->type_]["price"] = offers_data_[id].price;
+                offers_by_price[offer->type_]["quantity"] = offers_data_[id].qty;
                 json += offers_by_price;
             }
         }
@@ -196,26 +176,45 @@ void OrderBookAbseil::create_offer_structure(const nlohmann::basic_json<>& json)
     }
 }
 
-void OrderBookAbseil::print_offers_ordered_by_id() const {
+void OrderBookAbseil::print_by_id() const {
     auto damn = {&bids_, &asks_};
     for (const auto& offer: damn) {
-        for (auto id : offer->by_offer_id_) {
+        for (const auto& id : offer->by_id_) {
             printf("order id: [%u]; price: [%u]; quantity: [%u]\n",
                    id, offers_data_.at(id).price, offers_data_.at(id).qty);
         }
     }
 }
 
-absl::optional<PriceQty> OrderBookAbseil::get_order_by_id(OfferId id) {
+
+void OrderBookAbseil::print_by_price() const {
+    auto damn = {&bids_, &asks_};
+    for (const auto& offer: damn) {
+        for (auto price_iter = offer->by_price_.begin(); price_iter != offer->by_price_.end(); price_iter++) {
+            Price price = price_iter->first;
+            absl::btree_set<OfferId> ids_by_price = price_to_id_.at(price);
+            std::string ids = "";
+            Qty total_qty_by_price{};
+            for (OfferId id : ids_by_price) {
+                ids = absl::StrFormat("%s[%u]", ids, id);
+                total_qty_by_price += offers_data_.at(id).qty;
+            }
+            printf("Price: [%u]; Ids: [%s]; Qty: [%d]\n", price, ids.c_str(), total_qty_by_price);
+        }
+    }
+}
+
+
+absl::optional<PriceQty> OrderBookAbseil::get_order_by_id(OfferId id) const {
     if (offers_data_.contains(id)) {
-        return PriceQty {.price = offers_data_[id].price, .qty = offers_data_[id].qty};
+        return PriceQty {.price = offers_data_.at(id).price, .qty = offers_data_.at(id).qty};
     }
     return {};
 }
 
-absl::optional<absl::btree_set<OfferId>> OrderBookAbseil::get_offers_by_price(Price price) {
+absl::optional<absl::btree_set<OfferId>> OrderBookAbseil::get_offers_by_price(Price price) const {
     if (price_to_id_.contains(price)) {
-        return price_to_id_[price];
+        return price_to_id_.at(price);
     }
     return {};
 }

@@ -10,6 +10,10 @@
 #include <absl/types/optional.h>
 #include <nlohmann/json.hpp>
 
+enum class Offer {
+    BID,
+    ASK,
+};
 
 struct PriceQty {
     Price price {};
@@ -45,13 +49,13 @@ public:
     bool close_order(OfferId id, Qty quantity);
     Qty get_l2_size() const;
 
-    absl::optional<PriceQty> get_order_by_id(OfferId id);
-    absl::optional<absl::btree_set<OfferId>> get_offers_by_price(Price price);
+    absl::optional<PriceQty> get_order_by_id(OfferId id) const;
+    absl::optional<absl::btree_set<OfferId>> get_offers_by_price(Price price) const;
 
     bool store(const std::string& name = "abseil_order_book_data.json");
     bool load(const std::string& name = "abseil_order_book_data.json") noexcept;
 
-    void print_offers_ordered_by_id() const;
-    void print_offers_ordered_by_price();
+    void print_by_id() const;
+    void print_by_price() const;
     absl::flat_hash_map<OfferId, PriceQty> pack_all_data();
 };

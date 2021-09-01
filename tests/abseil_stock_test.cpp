@@ -16,8 +16,6 @@ TEST(add_order, add_bid) {
         reference_data_count.push_back(quantity);
     }
 
-    l2.print_offers_ordered_by_price();
-
     absl::flat_hash_map<OfferId, PriceQty> subject = l2.pack_all_data();
 
     ASSERT_EQ(l2.get_l2_size(), std::accumulate(reference_data_count.begin(), reference_data_count.end(), 0));
