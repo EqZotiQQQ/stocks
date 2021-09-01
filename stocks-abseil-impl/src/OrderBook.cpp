@@ -13,27 +13,35 @@ OfferId OrderBookAbseil::add_order(Offer offer_type, Price price, Qty quantity)
 
 void OrderBookAbseil::add_order_to(Offer order_type, Price price, Qty quantity, OfferId id)
 {
+//    std::cout << "add_order_to id = " << id << "\tprice = " << price << "\tqty = " << quantity << '\n';
     if (quantity != 0u) {
         if (order_type == Offer::ASK) {
+
             asks_.asks_ordered_by_offer_id_.insert(id);
             if (price_to_id_.contains(price)) {
+//                std::cout << "1\n";
                 asks_.asks_ordered_by_price_[price]++;
                 price_to_id_[price].push_back(id);
             } else {
+//                std::cout << "2\n";
                 asks_.asks_ordered_by_price_.emplace(price, 1);
                 price_to_id_.insert({price, std::vector<OfferId>{id}});
             }
         } else {
+//            std::cout << "add_order_to id = " << id << "\tprice = " << price << "\tqty = " << quantity << '\n';
             bids_.bids_ordered_by_offer_id_.insert(id);
             if (price_to_id_.contains(price)) {
+//                std::cout << "3\n";
                 bids_.bids_ordered_by_price_[price]++;
                 price_to_id_[price].push_back(id);
             } else {
+//                std::cout << "4\n";
                 bids_.bids_ordered_by_price_.emplace(price, 1);
                 price_to_id_.insert({price, std::vector<OfferId>{id}});
             }
         }
         offers_data_.emplace(offer_id_, PriceQty{.price=price, .qty=quantity, .type=order_type});
+        order_size_ += quantity;
     }
 }
 
@@ -53,6 +61,8 @@ Qty OrderBookAbseil::exchange_orders(Offer order_type, Price order_price, Qty qt
             Qty expensivest_ask_qty = offers_data_[expensivest_ask_id].qty;
             if (offers_data_[expensivest_ask_id].qty > qty) {
                 offers_data_[expensivest_ask_id].qty -= qty;
+
+                order_size_ -= qty;
             } else {
                 Qty order_by_price_cnt = --asks_.asks_ordered_by_price_[expensivest_ask_price];
                 asks_.asks_ordered_by_offer_id_.erase(expensivest_ask_id);
@@ -62,6 +72,7 @@ Qty OrderBookAbseil::exchange_orders(Offer order_type, Price order_price, Qty qt
                     asks_.asks_ordered_by_price_.erase(expensivest_ask_price);
                     price_to_id_.erase(expensivest_ask_price);
                 }
+                order_size_ -= expensivest_ask_qty;
             }
         } else {
             return qty;
@@ -77,6 +88,7 @@ Qty OrderBookAbseil::exchange_orders(Offer order_type, Price order_price, Qty qt
 
             if (offers_data_[cheapest_bid_id].qty > qty) {
                 offers_data_[cheapest_bid_id].qty -= qty;
+                order_size_-= qty;
             } else {
                 int s = bids_.bids_ordered_by_price_[cheapest_bid_price];
                 Qty order_by_price_cnt = --bids_.bids_ordered_by_price_[cheapest_bid_price];
@@ -87,6 +99,7 @@ Qty OrderBookAbseil::exchange_orders(Offer order_type, Price order_price, Qty qt
                     bids_.bids_ordered_by_price_.erase(cheapest_bid_price);
                     price_to_id_.erase(cheapest_bid_price);
                 }
+                order_size_ -= cheapest_bid_qty;
             }
         } else {
             return qty;
@@ -117,7 +130,7 @@ void OrderBookAbseil::print_offers_ordered_by_price() {
         std::string s = "";
         Qty qty {};
         for (OfferId id: v) {
-            s = absl::StrFormat("%s %u", s, id);
+            s = absl::StrFormat("%s[%u]", s, id);
             qty += offers_data_[id].qty;
         }
         printf("Price: [%u]; Ids: [%s]; Qty: [%d]\n", price, s.c_str(), qty);
@@ -152,85 +165,89 @@ bool OrderBookAbseil::close_order(OfferId id, Qty quantity)
 {
     if (offers_data_.contains(id)) {
         if (quantity > offers_data_[id].qty) {
+            printf("Failed to close %llu order. Available %llu while you tried to close %llu.\n", id, offers_data_[id].qty, quantity);
             return false;
         }
         if (offers_data_[id].type == Offer::BID) {
-//            if (quantity == offers_data_[id].qty) {
-//                Qty order_by_price_cnt = --bids_.bids_ordered_by_price_[cheapest_bid_price];
-//                bids_.bids_ordered_by_offer_id_.erase(cheapest_bid_id);
-//                qty -= cheapest_bid_qty;
-//                offers_data_.erase(cheapest_bid_id);
-//                if (order_by_price_cnt == 0) {
-//                    bids_.bids_ordered_by_price_.erase(cheapest_bid_price);
-//                    price_to_id_.erase(cheapest_bid_price);
-//                }
-//            } else {
-//
-//            }
+            if (quantity == offers_data_[id].qty) {
+                Price order_price = offers_data_[id].price;
+                std::vector<OfferId> ids_by_price = price_to_id_[order_price];
+
+                std::vector<OfferId> ids = price_to_id_[order_price];
+                for (int i = 0; i < ids.size(); i++) {
+                    if (id == ids[i]) {
+                        price_to_id_[order_price].erase(price_to_id_[order_price].begin() + i);
+                    }
+                }
+
+                offers_data_.erase(id);
+                bids_.bids_ordered_by_offer_id_.erase(id);
+                if (price_to_id_[order_price].empty()) {
+                    price_to_id_.erase(order_price);
+                    bids_.bids_ordered_by_price_.erase(order_price);
+                } else {
+                    bids_.bids_ordered_by_price_[order_price]--;
+                }
+            } else {
+                offers_data_[id].qty -= quantity;
+            }
+        } else {    //ASK
+            if (quantity == offers_data_[id].qty) {
+                Price order_price = offers_data_[id].price;
+                std::vector<OfferId> ids_by_price = price_to_id_[order_price];
+
+                std::vector<OfferId> ids = price_to_id_[order_price];
+                for (int i = 0; i < ids.size(); i++) {
+                    if (id == ids[i]) {
+                        price_to_id_[order_price].erase(price_to_id_[order_price].begin() + i);
+                    }
+                }
+
+                offers_data_.erase(id);
+                asks_.asks_ordered_by_offer_id_.erase(id);
+                if (price_to_id_[order_price].empty()) {
+                    price_to_id_.erase(order_price);
+                    asks_.asks_ordered_by_price_.erase(order_price);
+                } else {
+                    asks_.asks_ordered_by_price_[order_price]--;
+                }
+            } else {
+                offers_data_[id].qty -= quantity;
+            }
         }
-    }
-    return false;
-}
-
-//Qty OrderBookAbseil::get_l2_size() {
-//    return size_;
-//}
-/*Count OrderBookAbseil::close_order_helper(OfferID id, OfferSupporter_t orders, Count offer_quantity)
-{
-    Price cheapest_order = orders.offers_ordered_by_price_.begin()->first;
-
-    orders.offers_ordered_by_offer_id_.erase(id);
-    Count remove = id_to_count_[id];
-    __builtin_usubll_overflow(offer_quantity, remove, &offer_quantity);
-    id_to_count_.erase(id);
-    id_to_price_.erase(id);
-    OfferID offers_for_price_left = --orders.offers_ordered_by_price_[cheapest_order];
-    unordered_offer_id_.erase(id);
-    if (offers_for_price_left == 0) {
-        orders.unordered_offer_price_.erase(cheapest_order);
-        price_to_id_.erase(cheapest_order);
-        orders.offers_ordered_by_price_.erase(cheapest_order);
+        order_size_ -= quantity;
     } else {
-        auto iter = price_to_id_[cheapest_order].begin();
-        price_to_id_[cheapest_order].erase(iter);
-    }
-    return offer_quantity;
-}
+        printf("Id %llu not found\n", id);
 
-bool OrderBookAbseil::close_order(OfferID id, Count quantity) noexcept
-{
-    if (id_to_count_.count(id) == 0) {
-        printf("No such offer [%llu] to remove.\n", id);
         return false;
-    }
-    if (quantity > id_to_count_[id]) {
-        printf("Unable to remove [%llu] while only [%llu] available.\n", quantity, id_to_count_[id]);
-        return false;
-    }
-
-    if (unordered_offer_id_.find(id) != unordered_offer_id_.end()) {
-        OFFER offer_type = unordered_offer_id_[id];
-        OfferSupporter_t orders = identify_offer_helper(offer_type);
-        if (quantity == id_to_count_[id]) {
-            close_order_helper(id, orders, quantity);
-        } else {
-            id_to_count_[id] -= quantity;
-        }
     }
     return true;
 }
 
-Count OrderBookAbseil::get_l2_size() const noexcept
-{
-    Count ret{};
-    for (auto qt : id_to_count_) {
-        // maybe worth to return bool and size as parameter?
-        __builtin_uaddll_overflow(ret, qt.second, &ret);
-    }
-    return ret;
+Qty OrderBookAbseil::get_l2_size() const {
+    return order_size_;
 }
 
-bool OrderBookAbseil::store(const std::string& name) const noexcept
+
+absl::optional<PriceQty> OrderBookAbseil::get_offers_by_id_(OfferId id)
+{
+    if (offers_data_.contains(id)) {
+        return PriceQty {
+            .price = offers_data_[id].price,
+            .qty = offers_data_[id].qty
+        };
+    }
+    return {};
+}
+
+absl::optional<std::vector<OfferId>> OrderBookAbseil::get_offers_by_price(Price price)
+{
+    if (price_to_id_.contains(price)) {
+        return price_to_id_[price];
+    }
+    return {};
+}
+bool OrderBookAbseil::store(const std::string& name)
 {
     std::ofstream file(name);
     if (!file.is_open()) {
@@ -238,37 +255,27 @@ bool OrderBookAbseil::store(const std::string& name) const noexcept
     }
     nlohmann::json json;
 
-    Price prev{};
-    for (auto price = bids_ordered_by_price_.rbegin(); price != bids_ordered_by_price_.rend(); price++) {
-        if (prev == price->first) {
-            continue;
-        }
-        auto price_iter = price_to_id_.at(price->first);
-        for (auto id : price_iter) {
+    for (auto id = bids_.bids_ordered_by_price_.rbegin(); id != bids_.bids_ordered_by_price_.rend(); id++) {
+        std::vector<OfferId> ids = get_offers_by_price(id->first).value();
+        for (int i = 0; i < id->second; i++) {
             nlohmann::json offers_by_price;
-            offers_by_price["bid"]["id"] = id;
-            offers_by_price["bid"]["price"] = id_to_price_.at(id);
-            offers_by_price["bid"]["quantity"] = id_to_count_.at(id);
+            offers_by_price["bid"]["id"] = ids[i];
+            offers_by_price["bid"]["price"] = offers_data_[ids[i]].price;
+            offers_by_price["bid"]["quantity"] = offers_data_[ids[i]].qty;
             json += offers_by_price;
         }
-        prev = price->first;
-    }
-    prev = 0;
-    for (auto price = asks_ordered_by_price_.rbegin(); price != asks_ordered_by_price_.rend(); price++) {
-        if (prev == price->first) {
-            continue;
-        }
-        auto price_iter = price_to_id_.at(price->first);
-        for (auto id : price_iter) {
-            nlohmann::json offers_by_price;
-            offers_by_price["ask"]["id"] = id;
-            offers_by_price["ask"]["price"] = id_to_price_.at(id);
-            offers_by_price["ask"]["quantity"] = id_to_count_.at(id);
-            json += offers_by_price;
-        }
-        prev = price->first;
     }
 
+    for (auto id = asks_.asks_ordered_by_price_.rbegin(); id != asks_.asks_ordered_by_price_.rend(); id++) {
+        std::vector<OfferId> ids = get_offers_by_price(id->first).value();
+        for (int i = 0; i < id->second; i++) {
+            nlohmann::json offers_by_price;
+            offers_by_price["ask"]["id"] = ids[i];
+            offers_by_price["ask"]["price"] = offers_data_[ids[i]].price;
+            offers_by_price["ask"]["quantity"] = offers_data_[ids[i]].qty;
+            json += offers_by_price;
+        }
+    }
     file << std::setw(4) << json << std::endl;
     return true;
 }
@@ -295,65 +302,28 @@ void OrderBookAbseil::create_offer_structure(const nlohmann::basic_json<>& json)
 {
     for (const auto& str : json) {
         for (const auto& m : str) {
-            if (str.begin().key() == "bids") {
-                add_offer_to(OFFER::BID, m["price"], m["quantity"], m["id"]);
+            if (str.begin().key() == "bid") {
+                auto q = m["quantity"];
+                auto p = m["price"];
+                auto id = m["id"];
+//                std::cout << "id = " << id << "\tprice = " << p << "\tqty = " << q << '\n';
+                add_order_to(
+                    Offer::BID,
+                    m["price"],
+                    m["quantity"],
+                    m["id"]);
             } else {
-                add_offer_to(OFFER::BID, m["price"], m["quantity"], m["id"]);
+                auto q = m["quantity"];
+                auto p = m["price"];
+                auto id = m["id"];
+//                std::cout << "id = " << id << "\tprice = " << p << "\tqty = " << q << '\n';
+                add_order_to(
+                    Offer::ASK,
+                    m["price"],
+                    m["quantity"],
+                    m["id"]);
             }
+            offer_id_++;
         }
     }
 }
-
-bool OrderBookAbseil::get_offers_by_price(Price price, std::set<OfferID>*& offers) noexcept
-{
-    if (price_to_id_.count(price) != 0u) {
-        offers = &price_to_id_[price];
-        return true;
-    }
-    return false;
-}
-
-std::pair<Price, Count> OrderBook::get_offer_by_id(OfferID id) const noexcept
-{
-    if (id_to_price_.count(id) != 0u) {
-        return {id_to_price_.at(id), id_to_count_.at(id)};
-    }
-    return {};
-}
-
-std::map<OfferID, std::pair<Price, Count>> OrderBook::pack_all_data() const noexcept
-{
-    std::map<OfferID, std::pair<Price, Count>> ret;
-    for (auto id : bids_ordered_by_offer_id_) {
-        ret.emplace(id, std::make_pair(id_to_price_.at(id), id_to_count_.at(id)));
-    }
-    for (auto id : asks_ordered_by_offer_id_) {
-        ret.emplace(id, std::make_pair(id_to_price_.at(id), id_to_count_.at(id)));
-    }
-    return ret;
-}
-
-OrderBookAbseil::OfferSupporter_t OrderBookAbseil::identify_offer_helper(OFFER offer_type, bool swap_offer_type) noexcept
-{
-    if (swap_offer_type) {
-        if (offer_type == OFFER::BID) {
-            offer_type = OFFER::ASK;
-        } else {
-            offer_type = OFFER::BID;
-        }
-    }
-
-    if (offer_type == OFFER::BID) {
-        return OfferSupporter_t{
-            .offers_ordered_by_offer_id_ = bids_ordered_by_offer_id_,
-            .offers_ordered_by_price_ = bids_ordered_by_price_,
-            .unordered_offer_price_ = unordered_bid_price_,
-            };
-    } else {
-        return OfferSupporter_t{
-            .offers_ordered_by_offer_id_ = asks_ordered_by_offer_id_,
-            .offers_ordered_by_price_ = asks_ordered_by_price_,
-            .unordered_offer_price_ = unordered_ask_price_,
-            };
-    }
-}*/
