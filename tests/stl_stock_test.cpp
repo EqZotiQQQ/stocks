@@ -1,10 +1,6 @@
-#include "OrderBook.h"
+#include "tools.h"
 
-#include "gtest/gtest.h"
-
-#include <iostream>
-
-TEST(add_order, add_asks)
+TEST(add_order_stl, add_asks)
 {
     OrderBook l2;
     std::vector<OfferID> reference_data_ids;
@@ -28,7 +24,7 @@ TEST(add_order, add_asks)
     }
 }
 
-TEST(add_order, add_bids)
+TEST(add_order_stl, add_bids)
 {
     OrderBook l2;
     std::vector<OfferID> reference_data_ids;
@@ -53,7 +49,7 @@ TEST(add_order, add_bids)
     }
 }
 
-TEST(add_order, add_offers_different_types)
+TEST(add_order_stl, add_offers_different_types)
 {
     OrderBook l2;
     l2.add_order(OFFER::BID, 50, 10);
@@ -79,7 +75,7 @@ TEST(add_order, add_offers_different_types)
     }
 }
 
-TEST(close_order, close_ask)
+TEST(close_order_stl, close_ask)
 {
     OrderBook l2;
     std::vector<OfferID> reference_data_ids;
@@ -103,7 +99,7 @@ TEST(close_order, close_ask)
     ASSERT_TRUE(l2.close_order(reference_data_ids[1999], reference_data_count[1999]));
 }
 
-TEST(close_order, close_bid)
+TEST(close_order_stl, close_bid)
 {
     OrderBook l2;
     std::vector<OfferID> reference_data_ids;
@@ -127,7 +123,7 @@ TEST(close_order, close_bid)
     ASSERT_TRUE(l2.close_order(reference_data_ids[1999], reference_data_count[1999]));
 }
 
-TEST(close_order, close_bid_2)
+TEST(close_order_stl, close_bid_2)
 {
     OrderBook l2;
     std::vector<OfferID> reference_data_ids;
@@ -150,7 +146,7 @@ TEST(close_order, close_bid_2)
     }
 }
 
-TEST(close_order, close_bid_fail_1)
+TEST(close_order_stl, close_bid_fail_1)
 {
     OrderBook l2;
     Count quantity = 10;
@@ -160,14 +156,14 @@ TEST(close_order, close_bid_fail_1)
     ASSERT_FALSE(l2.close_order(id, 20));
 }
 
-TEST(close_order, close_bid_fail_2)
+TEST(close_order_stl, close_bid_fail_2)
 {
     OrderBook l2;
 
     ASSERT_FALSE(l2.close_order(10, 20));
 }
 
-TEST(close_order, close_ask_fail_1)
+TEST(close_order_stl, close_ask_fail_1)
 {
     OrderBook l2;
 
@@ -177,14 +173,14 @@ TEST(close_order, close_ask_fail_1)
     ASSERT_FALSE(l2.close_order(10, 20));
 }
 
-TEST(close_order, close_ask_fail_2)
+TEST(close_order_stl, close_ask_fail_2)
 {
     OrderBook l2;
 
     ASSERT_FALSE(l2.close_order(10, 20));
 }
 
-TEST(get_offers_by_price, get_prices)
+TEST(get_offers_by_price_stl, get_prices)
 {
     OrderBook l2;
     std::vector<OfferID> reference_data_ids;
@@ -212,7 +208,7 @@ TEST(get_offers_by_price, get_prices)
     }
 }
 
-TEST(get_offers_by_price, get_prices_failure)
+TEST(get_offers_by_price_stl, get_prices_failure)
 {
     OrderBook l2;
     std::set<OfferID>* subject = nullptr;
@@ -221,7 +217,7 @@ TEST(get_offers_by_price, get_prices_failure)
     ASSERT_EQ(l2.get_l2_size(), 0);
 }
 
-TEST(get_offer_by_id, get_ids1)
+TEST(get_offer_by_id_stl, get_ids1)
 {
     OrderBook l2;
     l2.add_order(OFFER::BID, 50, 10);
@@ -233,7 +229,7 @@ TEST(get_offer_by_id, get_ids1)
     ASSERT_EQ(subject, sample);
 }
 
-TEST(get_offer_by_id, get_ids2)
+TEST(get_offer_by_id_stl, get_ids2)
 {
     OrderBook l2;
     std::pair<Price, Count> sample{0, 0};
@@ -244,7 +240,7 @@ TEST(get_offer_by_id, get_ids2)
     ASSERT_EQ(l2.get_l2_size(), 0);
 }
 
-TEST(get_l2_size, get_number_of_l2)
+TEST(get_l2_size_stl, get_number_of_l2)
 {
     OrderBook l2;
     l2.add_order(OFFER::BID, 50, 10);
@@ -253,14 +249,14 @@ TEST(get_l2_size, get_number_of_l2)
     ASSERT_EQ(l2.get_l2_size(), 25);
 }
 
-TEST(get_l2_size, get_number_of_empty_l2)
+TEST(get_l2_size_stl, get_number_of_empty_l2)
 {
     OrderBook l2;
 
     ASSERT_EQ(l2.get_l2_size(), 0);
 }
 
-TEST(store, store_json_test)
+TEST(store_stl, store_json_test)
 {
     OrderBook l2;
 
@@ -279,7 +275,7 @@ TEST(store, store_json_test)
     ASSERT_TRUE(l2.store());
 }
 
-TEST(load, load_json_test)
+TEST(load_stl, load_json_test)
 {
     OrderBook l2;
 
@@ -287,14 +283,14 @@ TEST(load, load_json_test)
     ASSERT_TRUE(l2.store("load_json_test.json"));
 }
 
-TEST(load, load_json_test_failure)
+TEST(load_stl, load_json_test_failure)
 {
     OrderBook l2;
 
     ASSERT_FALSE(l2.load("some_name.json"));
 }
 
-TEST(trade, trade)
+TEST(trade_stl, trade)
 {
     OrderBook l2;
     for (int i = 0; i < 200000; i++) {
@@ -309,7 +305,7 @@ TEST(trade, trade)
     l2.store();
 }
 
-int main(int argc, char** argv)
+int run_stl_tests(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

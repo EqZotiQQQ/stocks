@@ -1,8 +1,6 @@
-#include <gtest/gtest.h>
+#include "tools.h"
 
-#include "OrderBook.h"
-
-TEST(add_order, add_bid) {
+TEST(add_order_absl, add_bid) {
     OrderBookAbseil l2;
     std::vector<OfferId> reference_data_ids;
     std::vector<Price> reference_data_price;
@@ -26,7 +24,7 @@ TEST(add_order, add_bid) {
     }
 }
 
-TEST(add_order, add_bids)
+TEST(add_order_absl, add_bids)
 {
     OrderBookAbseil l2;
     std::vector<OfferId> reference_data_ids;
@@ -51,7 +49,7 @@ TEST(add_order, add_bids)
     }
 }
 
-TEST(add_order, add_offers_different_types)
+TEST(add_order_absl, add_offers_different_types)
 {
     OrderBookAbseil l2;
     l2.add_order(Offer::BID, 50, 10);
@@ -78,7 +76,7 @@ TEST(add_order, add_offers_different_types)
     }
 }
 
-TEST(close_order, close_bid)
+TEST(close_order_absl, close_bid)
 {
     OrderBookAbseil l2;
     std::vector<OfferId> reference_data_ids;
@@ -103,7 +101,7 @@ TEST(close_order, close_bid)
 }
 
 
-TEST(close_order, close_bid_2)
+TEST(close_order_absl, close_bid_2)
 {
     OrderBookAbseil l2;
     std::vector<OfferId> reference_data_ids;
@@ -127,7 +125,7 @@ TEST(close_order, close_bid_2)
 }
 
 
-TEST(close_order, close_bid_fail_1)
+TEST(close_order_absl, close_bid_fail_1)
 {
     OrderBookAbseil l2;
     Qty quantity = 10;
@@ -137,7 +135,7 @@ TEST(close_order, close_bid_fail_1)
     ASSERT_FALSE(l2.close_order(id, 20));
 }
 
-TEST(close_order, close_bid_fail_2)
+TEST(close_order_absl, close_bid_fail_2)
 {
     OrderBookAbseil l2;
 
@@ -145,7 +143,7 @@ TEST(close_order, close_bid_fail_2)
 }
 
 
-TEST(close_order, close_ask_fail_1)
+TEST(close_order_absl, close_ask_fail_1)
 {
     OrderBookAbseil l2;
 
@@ -155,14 +153,14 @@ TEST(close_order, close_ask_fail_1)
     ASSERT_FALSE(l2.close_order(10, 20));
 }
 
-TEST(close_order, close_ask_fail_2)
+TEST(close_order_absl, close_ask_fail_2)
 {
     OrderBookAbseil l2;
 
     ASSERT_FALSE(l2.close_order(10, 20));
 }
 
-TEST(get_offers_by_price, get_prices)
+TEST(get_offers_by_price_absl, get_prices)
 {
     OrderBookAbseil l2;
     std::vector<OfferId> reference_data_ids;
@@ -182,7 +180,7 @@ TEST(get_offers_by_price, get_prices)
         }
     }
 
-    absl::optional<absl::btree_set<OfferId>> ids = l2.get_offers_by_price(price_ref);
+    absl::optional<std::vector<OfferId>> ids = l2.get_offers_by_price(price_ref);
 
     ASSERT_TRUE(ids.has_value());
 
@@ -192,16 +190,16 @@ TEST(get_offers_by_price, get_prices)
     }
 }
 
-TEST(get_offers_by_price, get_prices_failure)
+TEST(get_offers_by_price_absl, get_prices_failure)
 {
     OrderBookAbseil l2;
-    absl::optional<absl::btree_set<OfferId>> subject = l2.get_offers_by_price(0);
+    absl::optional<std::vector<OfferId>> subject = l2.get_offers_by_price(0);
 
     ASSERT_FALSE(subject.has_value());
     ASSERT_EQ(l2.get_l2_size(), 0);
 }
 
-TEST(get_offer_by_id, get_ids1)
+TEST(get_offer_by_id_absl, get_ids1)
 {
     OrderBookAbseil l2;
     OfferId id = l2.add_order(Offer::BID, 50, 10);
@@ -215,7 +213,7 @@ TEST(get_offer_by_id, get_ids1)
     ASSERT_EQ(subject.value(), sample);
 }
 
-TEST(get_offer_by_id, get_ids2)
+TEST(get_offer_by_id_absl, get_ids2)
 {
     OrderBookAbseil l2;
 
@@ -225,7 +223,7 @@ TEST(get_offer_by_id, get_ids2)
     ASSERT_EQ(l2.get_l2_size(), 0);
 }
 
-TEST(get_l2_size, get_number_of_l2)
+TEST(get_l2_size_absl, get_number_of_l2)
 {
     OrderBookAbseil l2;
     l2.add_order(Offer::BID, 50, 10);
@@ -234,14 +232,14 @@ TEST(get_l2_size, get_number_of_l2)
     ASSERT_EQ(l2.get_l2_size(), 25);
 }
 
-TEST(get_l2_size, get_number_of_empty_l2)
+TEST(get_l2_size_absl, get_number_of_empty_l2)
 {
     OrderBookAbseil l2;
 
     ASSERT_EQ(l2.get_l2_size(), 0);
 }
 
-TEST(store, store_json_test)
+TEST(store_absl, store_json_test)
 {
     OrderBookAbseil l2;
 
@@ -260,7 +258,7 @@ TEST(store, store_json_test)
     ASSERT_TRUE(l2.store());
 }
 
-TEST(load, load_json_test)
+TEST(load_absl, load_json_test)
 {
     OrderBookAbseil l2;
 
@@ -268,14 +266,14 @@ TEST(load, load_json_test)
     ASSERT_TRUE(l2.store("load_json_test.json"));
 }
 
-TEST(load, load_json_test_failure)
+TEST(load_absl, load_json_test_failure)
 {
     OrderBookAbseil l2;
 
     ASSERT_FALSE(l2.load("some_name.json"));
 }
 
-TEST(store, store_load_json_test)
+TEST(store_absl, store_load_json_test)
 {
     OrderBookAbseil l2;
 
@@ -301,7 +299,7 @@ TEST(store, store_load_json_test)
 
 }
 
-int main(int argc, char** argv)
+int run_absl_tests(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
