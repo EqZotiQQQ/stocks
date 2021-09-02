@@ -33,8 +33,8 @@ private:
     absl::flat_hash_map<OfferId, PriceQty> offers_data_;    // id -> full order info
 
     // provides O(1) access to id
-    absl::flat_hash_map<Price, absl::btree_set<OfferId>> price_to_id_;  // price -> ids by this price
-//    absl::flat_hash_map<Price, std::vector<OfferId>> price_to_id_;  // price -> ids by this price
+//    absl::flat_hash_map<Price, absl::btree_set<OfferId>> price_to_id_;  // price -> ids by this price
+    absl::flat_hash_map<Price, std::vector<OfferId>> price_to_id_;  // price -> ids by this price
 
 
     OfferId offer_id_ {};
@@ -50,7 +50,7 @@ public:
     Qty get_l2_size() const;
 
     absl::optional<PriceQty> get_order_by_id(OfferId id) const;
-    absl::optional<absl::btree_set<OfferId>> get_offers_by_price(Price price) const;
+    absl::optional<std::vector<OfferId>> get_offers_by_price(Price price) const;
 
     bool store(const std::string& name = "abseil_order_book_data.json");
     bool load(const std::string& name = "abseil_order_book_data.json") noexcept;

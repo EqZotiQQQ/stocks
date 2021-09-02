@@ -25,10 +25,10 @@ void OrderBookAbseil::add_order_to(Orders& orders, Price price, Qty quantity, Of
         orders.by_id_.insert(id);
         if (price_to_id_.contains(price)) {
             orders.by_price_[price]++;
-            price_to_id_[price].insert(id);
+            price_to_id_[price].push_back(id);
         } else {
             orders.by_price_.emplace(price, 1);
-            price_to_id_.insert({price, absl::btree_set<OfferId>{id}});
+            price_to_id_.insert({price, std::vector<OfferId>{id}});
         }
         offers_data_.emplace(id, PriceQty{.price = price, .qty = quantity});
         order_size_ += quantity;
@@ -97,15 +97,23 @@ bool OrderBookAbseil::close_order(OfferId id, Qty quantity) {
 
         if (quantity == offers_data_[id].qty) {
             Price order_price = offers_data_[id].price;
-            price_to_id_[order_price].erase(id);
-            offers_data_.erase(id);
-            orders.by_id_.erase(id);
-            if (price_to_id_[order_price].empty()) {
+            if (price_to_id_[order_price].size() == 1) {
                 price_to_id_.erase(order_price);
                 orders.by_price_.erase(order_price);
             } else {
                 orders.by_price_[order_price]--;
+                std::vector<OfferId> offers = price_to_id_[order_price];
+                auto iter = price_to_id_[order_price].begin();
+                for (int i = 0; i < offers.size(); i++) {
+                    if (offers[i] == id) {
+                        price_to_id_[order_price].erase(iter + i);
+                        break;
+                    }
+                }
             }
+            offers_data_.erase(id);
+            orders.by_id_.erase(id);
+
         } else {
             offers_data_[id].qty -= quantity;
         }
@@ -131,7 +139,7 @@ bool OrderBookAbseil::store(const std::string& name) {
     auto damn = {&bids_, &asks_};
     for (const auto& offer: damn) {
         for (auto id_by_price = offer->by_price_.rbegin(); id_by_price != offer->by_price_.rend(); id_by_price++) {
-            absl::btree_set<OfferId> ids_by_same_price = get_offers_by_price(id_by_price->first).value();
+            std::vector<OfferId> ids_by_same_price = get_offers_by_price(id_by_price->first).value();
             for (auto id: ids_by_same_price) {
                 nlohmann::json offers_by_price;
                 offers_by_price[offer->type_]["id"] = id;
@@ -192,7 +200,7 @@ void OrderBookAbseil::print_by_price() const {
     for (const auto& offer: damn) {
         for (auto price_iter = offer->by_price_.begin(); price_iter != offer->by_price_.end(); price_iter++) {
             Price price = price_iter->first;
-            absl::btree_set<OfferId> ids_by_price = price_to_id_.at(price);
+            std::vector<OfferId> ids_by_price = price_to_id_.at(price);
             std::string ids = "";
             Qty total_qty_by_price{};
             for (OfferId id : ids_by_price) {
@@ -212,7 +220,7 @@ absl::optional<PriceQty> OrderBookAbseil::get_order_by_id(OfferId id) const {
     return {};
 }
 
-absl::optional<absl::btree_set<OfferId>> OrderBookAbseil::get_offers_by_price(Price price) const {
+absl::optional<std::vector<OfferId>> OrderBookAbseil::get_offers_by_price(Price price) const {
     if (price_to_id_.contains(price)) {
         return price_to_id_.at(price);
     }

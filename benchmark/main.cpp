@@ -7,9 +7,9 @@ void add_asks(benchmark::State& state)
 {
     OrderBook l2;
     while (state.KeepRunning()) {
-        for (int i = 0; i < 20000; i++) {
-            Price price = rand() % 3000 + 50;
-            Price quantity = rand() % 1000 + 40;
+        for (int i = 0; i < 2000000; i++) {
+            Price price = rand() % 1 + 50;
+            Price quantity = rand() % 1 + 40;
             l2.add_order(OFFER::ASK, price, quantity);
         }
     }
@@ -19,9 +19,9 @@ void add_asks_abseil(benchmark::State& state)
 {
     OrderBookAbseil l2;
     while (state.KeepRunning()) {
-        for (int i = 0; i < 20000; i++) {
-            Price price = rand() % 3000 + 50;
-            Price quantity = rand() % 1000 + 40;
+        for (int i = 0; i < 2000000; i++) {
+            Price price = rand() % 1 + 50;
+            Price quantity = rand() % 1 + 40;
             l2.add_order(Offer::ASK, price, quantity);
         }
     }
