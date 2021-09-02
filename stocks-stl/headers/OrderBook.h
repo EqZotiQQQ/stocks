@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Order.h"
+
 #include <nlohmann/json.hpp>
 
 #include <map>
@@ -8,9 +10,12 @@
 #include <unordered_set>
 #include <vector>
 
-using Price = unsigned long long int; // price in cents but i guess i need to switch to something bigger to remove overflow issue
+namespace stl {
+
+using Price
+    = unsigned long long int; // price in cents but i guess i need to switch to something bigger to remove overflow issue
 using OfferID = unsigned long long int; // id of offer. It
-using Count = unsigned long long int;
+using Qty = unsigned long long int;
 
 /***
  * offer type
@@ -29,6 +34,10 @@ enum class OFFER { BID, ASK };
 class OrderBook
 {
 public:
+    OrderBook() {
+        asks_.order_type = "ask";
+        bids_.order_type = "bid";
+    }
     /***
      * Place offer into level2
      * @param offer_type ask or bid offer
@@ -36,7 +45,7 @@ public:
      * @param quantity number of offers
      * @return id of offer
      */
-    OfferID add_order(OFFER offer_type, Price price, Count quantity) noexcept;
+    OfferID add_order(OFFER offer_type, Price price, Qty quantity) noexcept;
 
     /***
      * close order on stock
@@ -44,7 +53,7 @@ public:
      * @param quantity number of offers that should be closed
      * @return success of operation
      */
-    bool close_order(OfferID id, Count quantity) noexcept;
+    bool close_order(OfferID id, Qty quantity) noexcept;
 
     /***
      * make snapshot to json
@@ -73,50 +82,29 @@ public:
      * @param id if of offer
      * @return pair price-count of offer
      */
-    std::pair<Price, Count> get_offer_by_id(OfferID id) const noexcept;
+    std::pair<Price, Qty> get_offer_by_id(OfferID id) const noexcept;
 
     /***
      * method for debug and tests
      * @return returns snapshot of data
      */
-    std::map<OfferID, std::pair<Price, Count>> pack_all_data() const noexcept;
+    std::map<OfferID, std::pair<Price, Qty>> pack_all_data() const noexcept;
 
     /***
      * get number of offers in level2
      * @return returns number of offers in level2
      */
-    Count get_l2_size() const noexcept;
+    Qty get_l2_size() const noexcept;
 
 private:
-    /***
-     * Helper object to keep ref on objects in private methods.
-     * Because of asks and bids pretty similar big amount of code
-     * can be removed using this helper class.
-     */
-    struct OfferSupporter_t
-    {
-        std::set<OfferID>& offers_ordered_by_offer_id_;
-        std::map<Price, Count>& offers_ordered_by_price_;
-        std::unordered_set<Price>& unordered_offer_price_;
-    };
 
-    // contains unique ids in order. Use them like keys
-    std::set<OfferID> bids_ordered_by_offer_id_;
-    std::set<OfferID> asks_ordered_by_offer_id_;
-
-    // contain prices count of offer for those prices in order. Use them like keys
-    std::map<Price, Count> bids_ordered_by_price_;
-    std::map<Price, Count> asks_ordered_by_price_;
+    Orders asks_, bids_;
 
     // O(1) check speed. Return false if insert failed
-    std::unordered_set<Price> unordered_bid_price_;
-    std::unordered_set<Price> unordered_ask_price_;
-
-    // O(1) check speed. Return false if insert failed
-    std::unordered_map<OfferID, OFFER> unordered_offer_id_;
+    std::unordered_set<OfferID> unordered_offer_id_;
 
     // provides O(1) access to count
-    std::unordered_map<OfferID, Count> id_to_count_;
+    std::unordered_map<OfferID, Qty> id_to_count_;
     std::unordered_map<OfferID, Price> id_to_price_;
 
     // provides O(1) access to id
@@ -126,21 +114,13 @@ private:
     OfferID offer_id_{};
 
     /***
-     * Fills out the structure depending on the type of order.
-     * @param offer_type
-     * @param swap_offer_type for close offers
-     * @return struct of object that contains offers based on
-     */
-    OfferSupporter_t identify_offer_helper(OFFER offer_type, bool swap_offer_type = false) noexcept;
-
-    /***
      * simply add offer to level2.
      * @param offer_type
      * @param price offer price
      * @param quantity number of offers
      * @param id offer id
      */
-    void add_offer_to(OFFER offer_type, Price price, Count quantity, OfferID id) noexcept;
+    void add_offer_to(Orders orders, Price price, Qty quantity, OfferID id) noexcept;
 
     /***
      * closes existing asks if bid is less expensive or closes bid if ask is more expensive.
@@ -149,7 +129,7 @@ private:
      * @param quantity number of offers
      * @return
      */
-    Count exchange_offers(OFFER offer_type, Price price, Count quantity) noexcept;
+    Qty exchange_offers(Orders orders, Price price, Qty quantity) noexcept;
 
     /***
      * unpack data from and push them to level2
@@ -164,5 +144,7 @@ private:
      * @param offer_quantity number of offers
      * @return return number of offer then left after compensations opposite
      */
-    Count close_order_helper(OfferID id, OfferSupporter_t orders, Count offer_quantity);
+    Qty close_order_helper(OfferID id, Orders orders, Qty offer_quantity);
 };
+
+}

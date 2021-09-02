@@ -3,7 +3,7 @@
 
 #include "benchmark/benchmark.h"
 
-void add_asks(benchmark::State& state)
+void add_asks_stl(benchmark::State& state)
 {
     OrderBook l2;
     while (state.KeepRunning()) {
@@ -11,6 +11,22 @@ void add_asks(benchmark::State& state)
             Price price = rand() % 1 + 50;
             Price quantity = rand() % 1 + 40;
             l2.add_order(OFFER::ASK, price, quantity);
+        }
+    }
+}
+
+void add_mixed_stl(benchmark::State& state)
+{
+    OrderBook l2;
+    while (state.KeepRunning()) {
+        for (int i = 0; i < 2000000; i++) {
+            Price price = rand() % 1 + 50;
+            Price quantity = rand() % 1 + 40;
+            if (i % 2 == 0) {
+                l2.add_order(OFFER::ASK, price, quantity);
+            } else {
+                l2.add_order(OFFER::BID, price, quantity);
+            }
         }
     }
 }
@@ -29,7 +45,8 @@ void add_asks_abseil(benchmark::State& state)
 
 // faced an issue with big number of iterations... it works for gtests but fails for benchmark
 //  kNanosecond, kMicrosecond, kMillisecond, kSecond
-BENCHMARK(add_asks)->Arg(0)->Unit(benchmark::kMillisecond);
-BENCHMARK(add_asks_abseil)->Arg(0)->Unit(benchmark::kMillisecond);
+//BENCHMARK(add_asks_stl)->Arg(0)->Unit(benchmark::kMillisecond);
+BENCHMARK(add_mixed_stl)->Arg(0)->Unit(benchmark::kMillisecond);
+//BENCHMARK(add_asks_abseil)->Arg(0)->Unit(benchmark::kMillisecond);
 
 BENCHMARK_MAIN();
