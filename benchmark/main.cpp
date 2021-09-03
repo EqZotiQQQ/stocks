@@ -12,7 +12,7 @@ void add_asks_stl(benchmark::State& state)
         for (int i = 0; i < 2000000; i++) {
             Price price = rand() % 1 + 50;
             Price quantity = rand() % 1 + 40;
-            l2.add_order(OFFER::ASK, price, quantity);
+            l2.add_order(ORDER_TYPE::ASK, price, quantity);
         }
     }
 }
@@ -25,9 +25,9 @@ void add_mixed_stl(benchmark::State& state)
             Price price = rand() % 1 + 50;
             Price quantity = rand() % 1 + 40;
             if (i % 2 == 0) {
-                l2.add_order(OFFER::ASK, price, quantity);
+                l2.add_order(ORDER_TYPE::ASK, price, quantity);
             } else {
-                l2.add_order(OFFER::BID, price, quantity);
+                l2.add_order(ORDER_TYPE::BID, price, quantity);
             }
         }
     }
@@ -44,7 +44,7 @@ void create_then_close_orders_stl(benchmark::State& state)
             Price quantity = rand() % 1 + 40;
             ids.push_back(i);
             qtys.push_back(quantity);
-            l2.add_order(OFFER::ASK, price, quantity);
+            l2.add_order(ORDER_TYPE::ASK, price, quantity);
         }
 
         for (int i = 0; i < ids.size(); i++) {
@@ -65,7 +65,7 @@ void store_stl(benchmark::State& state)
             Price quantity = rand() % 1 + 40;
             ids.push_back(i);
             qtys.push_back(quantity);
-            l2.add_order(OFFER::ASK, price, quantity);
+            l2.add_order(ORDER_TYPE::ASK, price, quantity);
         }
         l2.store();
     }
@@ -83,7 +83,7 @@ void store_then_load_stl(benchmark::State& state)
             Price quantity = rand() % 1 + 40;
             ids.push_back(i);
             qtys.push_back(quantity);
-            l2.add_order(OFFER::ASK, price, quantity);
+            l2.add_order(ORDER_TYPE::ASK, price, quantity);
         }
         l2.store();
         l2.load();

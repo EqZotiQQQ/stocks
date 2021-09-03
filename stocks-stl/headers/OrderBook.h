@@ -14,20 +14,15 @@ namespace stl {
 
 using Price
     = unsigned long long int; // price in cents but i guess i need to switch to something bigger to remove overflow issue
-using OfferID = unsigned long long int; // id of offer. It
+using OrderID = unsigned long long int; // id of order. It
 using Qty = unsigned long long int;
-
-/***
- * offer type
- */
-enum class OFFER { BID, ASK };
 
 struct PriceQty {
     Price price;
     Qty qty;
 };
 /***
- * OrderBook that stores active offers.
+ * OrderBook that stores active orders.
  * Implemented using stl.
  *
  * Few things that could make it faster:
@@ -38,26 +33,23 @@ struct PriceQty {
 class OrderBook
 {
 public:
-    OrderBook() {
-        asks_.order_type = "ask";
-        bids_.order_type = "bid";
-    }
+    OrderBook();
     /***
-     * Place offer into level2
-     * @param offer_type ask or bid offer
-     * @param price price for offer
-     * @param quantity number of offers
-     * @return id of offer
+     * Place order into order book
+     * @param order_type ask or bid order
+     * @param price price for order
+     * @param quantity number of orders
+     * @return id of order
      */
-    OfferID add_order(OFFER order_type, Price price, Qty quantity) noexcept;
+    OrderID add_order(ORDER_TYPE order_type, Price price, Qty quantity) noexcept;
 
     /***
      * close order on stock
-     * @param id id of offer
-     * @param quantity number of offers that should be closed
+     * @param id id of order
+     * @param quantity number of orders that should be closed
      * @return success of operation
      */
-    bool close_order(OfferID id, Qty quantity) noexcept;
+    bool close_order(OrderID id, Qty quantity) noexcept;
 
     /***
      * make snapshot to json
@@ -74,30 +66,31 @@ public:
     bool load(const std::string& name = "stocks-stl.json") noexcept;
 
     /***
-     * get as parameter set of offers id filtered by price
+     * get as parameter set of orders id filtered by price
      * @param price price filter
-     * @param offers set of offer id
+     * @param orders set of order id
      * @return success of operation
      */
-    bool get_offers_by_price(Price price, std::set<OfferID>*& offers) noexcept;
+    bool get_orders_by_price(Price price, std::set<OrderID>*& orders) noexcept;
 
     /***
      * get price-count by id
-     * @param id if of offer
-     * @return pair price-count of offer
+     * @param id if of order
+     * @return pair price-count of order
      */
-    std::pair<Price, Qty> get_offer_by_id(OfferID id) const noexcept;
+    std::pair<Price, Qty> get_order_by_id(OrderID id) const noexcept;
 
     /***
      * method for debug and tests
      * @return returns snapshot of data
      */
-    std::map<OfferID, std::pair<Price, Qty>> pack_all_data() const noexcept;
+    std::map<OrderID, std::pair<Price, Qty>> pack_all_data() const noexcept;
 
     /***
-     * get number of offers in level2
+     * get number of orders in level2
      * @return returns number of offers in level2
      */
+
     Qty get_l2_size() const noexcept;
 
 private:
@@ -105,49 +98,51 @@ private:
     Orders asks_, bids_;
 
     // O(1) check speed. Return false if insert failed
-    std::unordered_set<OfferID> unordered_offer_id_;
+    std::unordered_set<OrderID> unordered_order_id_;
 
     // provides O(1) access to count
-    std::unordered_map<OfferID, PriceQty> id_to_data_;
+    std::unordered_map<OrderID, PriceQty> id_to_data_;
 
     // provides O(1) access to id
-    std::unordered_map<Price, std::set<OfferID>> price_to_id_;
+    std::unordered_map<Price, std::set<OrderID>> price_to_id_;
 
-    // offer_id. Might be overflowed and probably there should be used something that can't be overloaded.
-    OfferID offer_id_{};
+    // order_id. Might be overflowed and probably there should be used something that can't be overloaded.
+    OrderID order_id_{};
+
+    Qty size_ {};
 
     /***
-     * simply add offer to level2.
-     * @param offer_type
-     * @param price offer price
-     * @param quantity number of offers
-     * @param id offer id
+     * simply add order to level2.
+     * @param order_type
+     * @param price order price
+     * @param quantity number of orders
+     * @param id order id
      */
-    void add_offer_to(Orders& orders, Price price, Qty quantity, OfferID id) noexcept;
+    void add_order_to(Orders& orders, Price price, Qty quantity, OrderID id) noexcept;
 
     /***
      * closes existing asks if bid is less expensive or closes bid if ask is more expensive.
-     * @param offer_type
-     * @param price offer price
-     * @param quantity number of offers
+     * @param order_type
+     * @param price order price
+     * @param quantity number of orders
      * @return
      */
-    Qty exchange_offers(Orders& orders, Price price, Qty quantity) noexcept;
+    Qty exchange_orders(Orders& orders, Price price, Qty quantity) noexcept;
 
     /***
      * unpack data from and push them to level2
      * @param json file
      */
-    void create_offer_structure(const nlohmann::basic_json<>& json) noexcept;
+    void create_order_structure(const nlohmann::basic_json<>& json) noexcept;
 
     /***
-     * closes the offer
+     * closes the order
      * @param id
      * @param orders
-     * @param offer_quantity number of offers
-     * @return return number of offer then left after compensations opposite
+     * @param order_quantity number of orders
+     * @return return number of order then left after compensations opposite
      */
-    Qty close_order_helper(OfferID id, Orders& orders, Qty offer_quantity);
+    void close_order_helper(Orders& orders, OrderID id, Price price);
 };
 
 }
