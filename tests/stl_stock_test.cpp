@@ -219,23 +219,21 @@ TEST(get_order_by_id_stl, get_ids1)
 {
     OrderBook l2;
     l2.add_order(ORDER_TYPE::BID, 50, 10);
-    std::pair<Price, Qty> sample{50, 10};
-
-    std::pair<Price, Qty> subject = l2.get_order_by_id(0);
+    stl::PriceQty sample{.price = 50, .qty =10};
+    stl::PriceQty* subject = nullptr;
+    l2.get_order_by_id(0, subject);
 
     ASSERT_EQ(l2.get_l2_size(), 10);
-    ASSERT_EQ(subject, sample);
+    ASSERT_EQ(*subject, sample);
 }
 
 TEST(get_order_by_id_stl, get_ids2)
 {
     OrderBook l2;
-    std::pair<Price, Qty> sample{0, 0};
 
-    auto subject = l2.get_order_by_id(0);
+    stl::PriceQty* subject = nullptr;
 
-    ASSERT_EQ(subject, sample);
-    ASSERT_EQ(l2.get_l2_size(), 0);
+    ASSERT_FALSE(l2.get_order_by_id(0, subject));
 }
 
 TEST(get_l2_size_stl, get_number_of_l2)

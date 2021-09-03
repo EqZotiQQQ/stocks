@@ -191,12 +191,13 @@ bool OrderBook::get_orders_by_price(Price price, std::set<OrderID>*& orders) noe
     return false;
 }
 
-std::pair<Price, Qty> OrderBook::get_order_by_id(OrderID id) const noexcept
+bool OrderBook::get_order_by_id(OrderID id, PriceQty*& order) noexcept
 {
     if (id_to_data_.count(id) != 0u) {
-        return {id_to_data_.at(id).price, id_to_data_.at(id).qty};
+        order = &id_to_data_[id];
+        return true;
     }
-    return {};
+    return false;
 }
 
 std::map<OrderID, std::pair<Price, Qty>> OrderBook::pack_all_data() const noexcept

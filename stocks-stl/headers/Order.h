@@ -15,14 +15,16 @@ using OrderID = uint64_t;
 using Price = uint64_t;
 using Qty = uint64_t;
 
-// Struct that contains data for each type
+// data related to each order type
 struct Orders
 {
-    // contains unique ids in order. Use them like keys
+    // unique ids in order
     std::set<OrderID> by_id_;
-    // contain prices count of offer for those prices in order. Use them like keys
+
+    // prices count of offer for those prices in order
     std::map<Price, Qty> by_price_;
-    // O(1) check speed. Return false if insert failed
+
+    // provides O(1) check speed or O(n) in worse
     std::unordered_set<Price> unordered_price_;
 
     // name of order type as string

@@ -35,7 +35,7 @@ void add_mixed_stl(benchmark::State& state)
 void create_then_close_orders_stl(benchmark::State& state)
 {
     OrderBook l2;
-    std::vector<OfferId> ids;
+    std::vector<OrderID> ids;
     std::vector<Qty> qtys;
 
     while (state.KeepRunning()) {
@@ -56,7 +56,7 @@ void create_then_close_orders_stl(benchmark::State& state)
 void store_stl(benchmark::State& state)
 {
     OrderBook l2;
-    std::vector<OfferId> ids;
+    std::vector<OrderID> ids;
     std::vector<Qty> qtys;
 
     while (state.KeepRunning()) {
@@ -74,7 +74,7 @@ void store_stl(benchmark::State& state)
 void store_then_load_stl(benchmark::State& state)
 {
     OrderBook l2;
-    std::vector<OfferId> ids;
+    std::vector<OrderID> ids;
     std::vector<Qty> qtys;
 
     while (state.KeepRunning()) {
