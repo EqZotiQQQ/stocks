@@ -69,12 +69,12 @@ TEST(add_order_stl, add_offers_different_types)
         {5, {50, 200}},
     };
 
-//    ASSERT_EQ(l2.get_l2_size(), 316);
-//
-//    for (int i = 0; i < reference_data.size(); i++) {
-//        ASSERT_EQ(subject[i].first, reference_data[i].first);
-//        ASSERT_EQ(subject[i].second, reference_data[i].second);
-//    }
+    ASSERT_EQ(l2.get_l2_size(), 316);
+
+    for (int i = 0; i < reference_data.size(); i++) {
+        ASSERT_EQ(subject[i].first, reference_data[i].first);
+        ASSERT_EQ(subject[i].second, reference_data[i].second);
+    }
 }
 
 TEST(close_order_stl, close_ask)
