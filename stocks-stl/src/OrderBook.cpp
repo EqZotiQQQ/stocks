@@ -21,7 +21,6 @@ OfferID OrderBook::add_order(OFFER order_type, Price price, Qty quantity) noexce
 void OrderBook::add_offer_to(Orders& orders, Price price, Qty quantity, OfferID id) noexcept
 {
     if (quantity != 0u) {
-
         if (!orders.unordered_price_.insert(price).second) {
             unordered_offer_id_.emplace(id);
             price_to_id_[price].insert(id);
@@ -54,12 +53,12 @@ Qty OrderBook::exchange_offers(Orders& orders, Price offer_price, Qty offer_quan
         exchange_condition = target_price >= offer_price;
     }
 
-    OfferId target_id =  *price_to_id_[target_price].begin();
-    Qty target_qty =     id_to_data_[target_id].qty;
-
     if (!exchange_condition) {
         return offer_quantity;
     }
+
+    OfferId target_id =  *price_to_id_[target_price].begin();
+    Qty target_qty =     id_to_data_[target_id].qty;
 
     if (target_qty > offer_quantity) {
         __builtin_usubll_overflow(id_to_data_[target_id].qty, offer_quantity, &id_to_data_[target_id].qty);
@@ -72,22 +71,23 @@ Qty OrderBook::exchange_offers(Orders& orders, Price offer_price, Qty offer_quan
 
 Qty OrderBook::close_order_helper(OfferID id, Orders& orders, Qty offer_quantity)
 {
-    Price cheapest_order = orders.by_price_.begin()->first;
+    Price target_order_id = orders.by_price_.begin()->first;
+    Qty target_qty = id_to_data_[id].qty;
 
-    orders.by_id_.erase(id);
-    Qty remove = id_to_data_[id].qty;
-    __builtin_usubll_overflow(offer_quantity, remove, &offer_quantity);
     id_to_data_.erase(id);
-    OfferID offers_for_price_left = --orders.by_price_[cheapest_order];
     unordered_offer_id_.erase(id);
-    if (offers_for_price_left == 0) {
-        orders.unordered_price_.erase(cheapest_order);
-        price_to_id_.erase(cheapest_order);
-        orders.by_price_.erase(cheapest_order);
+    orders.by_id_.erase(id);
+    if (--orders.by_price_[target_order_id] == 0) {
+        price_to_id_.erase(target_order_id);
+        orders.unordered_price_.erase(target_order_id);
+        orders.by_price_.erase(target_order_id);
     } else {
-        auto iter = price_to_id_[cheapest_order].begin();
-        price_to_id_[cheapest_order].erase(iter);
+        auto iter = price_to_id_[target_order_id].begin();
+        price_to_id_[target_order_id].erase(iter);
     }
+
+    __builtin_usubll_overflow(offer_quantity, target_qty, &offer_quantity);
+
     return offer_quantity;
 }
 
@@ -136,7 +136,6 @@ bool OrderBook::store(const std::string& name) noexcept
     auto items = {&bids_, &asks_};
     for (const auto& offer: items) {
         for (auto price = offer->by_price_.rbegin(); price != offer->by_price_.rend(); price++) {
-
             std::set<OfferId>* ids_by_price = nullptr;
             if (!get_offers_by_price(price->first, ids_by_price)) {
                 return false;
