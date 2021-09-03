@@ -22,6 +22,10 @@ using Qty = unsigned long long int;
  */
 enum class OFFER { BID, ASK };
 
+struct PriceQty {
+    Price price;
+    Qty qty;
+};
 /***
  * OrderBook that stores active offers.
  * Implemented using stl.
@@ -104,8 +108,7 @@ private:
     std::unordered_set<OfferID> unordered_offer_id_;
 
     // provides O(1) access to count
-    std::unordered_map<OfferID, Qty> id_to_count_;
-    std::unordered_map<OfferID, Price> id_to_price_;
+    std::unordered_map<OfferID, PriceQty> id_to_data_;
 
     // provides O(1) access to id
     std::unordered_map<Price, std::set<OfferID>> price_to_id_;

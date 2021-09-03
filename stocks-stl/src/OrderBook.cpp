@@ -33,8 +33,7 @@ void OrderBook::add_offer_to(Orders& orders, Price price, Qty quantity, OfferID 
         unordered_offer_id_.emplace(id);
         orders.by_id_.insert(id);
 
-        id_to_count_.emplace(id, quantity);
-        id_to_price_.emplace(id, price);
+        id_to_data_.emplace(id, PriceQty{.price = price, .qty = quantity});
     }
 }
 
@@ -45,28 +44,25 @@ Qty OrderBook::exchange_offers(Orders& orders, Price offer_price, Qty offer_quan
     }
 
     Price target_price;
-    OfferId target_id;
-    Qty target_qty;
     bool exchange_condition;
 
     if (orders.order_type == "bid") {
         target_price =   bids_.by_price_.begin()->first;
-        target_id =      *price_to_id_[target_price].begin();
-        target_qty =     id_to_count_[target_id];
         exchange_condition = offer_price >= target_price;
     } else {
         target_price =   asks_.by_price_.rbegin()->first;
-        target_id =      *price_to_id_[target_price].begin();
-        target_qty =     id_to_count_[target_id];
         exchange_condition = target_price >= offer_price;
     }
+
+    OfferId target_id =  *price_to_id_[target_price].begin();
+    Qty target_qty =     id_to_data_[target_id].qty;
 
     if (!exchange_condition) {
         return offer_quantity;
     }
 
     if (target_qty > offer_quantity) {
-        __builtin_usubll_overflow(id_to_count_[target_id], offer_quantity, &id_to_count_[target_id]);
+        __builtin_usubll_overflow(id_to_data_[target_id].qty, offer_quantity, &id_to_data_[target_id].qty);
         offer_quantity = 0;
     } else {
         offer_quantity = close_order_helper(target_id, orders, offer_quantity);
@@ -79,10 +75,9 @@ Qty OrderBook::close_order_helper(OfferID id, Orders& orders, Qty offer_quantity
     Price cheapest_order = orders.by_price_.begin()->first;
 
     orders.by_id_.erase(id);
-    Qty remove = id_to_count_[id];
+    Qty remove = id_to_data_[id].qty;
     __builtin_usubll_overflow(offer_quantity, remove, &offer_quantity);
-    id_to_count_.erase(id);
-    id_to_price_.erase(id);
+    id_to_data_.erase(id);
     OfferID offers_for_price_left = --orders.by_price_[cheapest_order];
     unordered_offer_id_.erase(id);
     if (offers_for_price_left == 0) {
@@ -98,24 +93,24 @@ Qty OrderBook::close_order_helper(OfferID id, Orders& orders, Qty offer_quantity
 
 bool OrderBook::close_order(OfferID id, Qty quantity) noexcept
 {
-    if (id_to_count_.count(id) == 0) {
+    if (id_to_data_.count(id) == 0) {
         printf("No such offer [%llu] to remove.\n", id);
         return false;
     }
-    if (quantity > id_to_count_[id]) {
-        printf("Unable to remove [%llu] while only [%llu] available.\n", quantity, id_to_count_[id]);
+    if (quantity > id_to_data_[id].qty) {
+        printf("Unable to remove [%llu] while only [%llu] available.\n", quantity, id_to_data_[id].qty);
         return false;
     }
 
     if (unordered_offer_id_.find(id) != unordered_offer_id_.end()) {
-        if (quantity == id_to_count_[id]) {
+        if (quantity == id_to_data_[id].qty) {
             if (asks_.by_id_.find(id) != asks_.by_id_.end()) {
                 close_order_helper(id, asks_, quantity);
             } else {
                 close_order_helper(id, bids_, quantity);
             }
         } else {
-            id_to_count_[id] -= quantity;
+            id_to_data_[id].qty -= quantity;
         }
     }
     return true;
@@ -124,9 +119,9 @@ bool OrderBook::close_order(OfferID id, Qty quantity) noexcept
 Qty OrderBook::get_l2_size() const noexcept
 {
     Qty ret{};
-    for (auto qt : id_to_count_) {
+    for (auto qt : id_to_data_) {
         // maybe worth to return bool and size as parameter?
-        __builtin_uaddll_overflow(ret, qt.second, &ret);
+        __builtin_uaddll_overflow(ret, qt.second.qty, &ret);
     }
     return ret;
 }
@@ -149,11 +144,10 @@ bool OrderBook::store(const std::string& name) noexcept
             for (OfferId id : *ids_by_price) {
                 nlohmann::json offers_by_price;
                 offers_by_price[offer->order_type]["id"] = id;
-                offers_by_price[offer->order_type]["price"] = id_to_price_[id];
-                offers_by_price[offer->order_type]["quantity"] = id_to_count_[id];
+                offers_by_price[offer->order_type]["price"] = id_to_data_[id].price;
+                offers_by_price[offer->order_type]["quantity"] = id_to_data_[id].qty;
                 json += offers_by_price;
             }
-
         }
     }
     file << std::setw(4) << json << std::endl;
@@ -202,8 +196,8 @@ bool OrderBook::get_offers_by_price(Price price, std::set<OfferID>*& offers) noe
 
 std::pair<Price, Qty> OrderBook::get_offer_by_id(OfferID id) const noexcept
 {
-    if (id_to_price_.count(id) != 0u) {
-        return {id_to_price_.at(id), id_to_count_.at(id)};
+    if (id_to_data_.count(id) != 0u) {
+        return {id_to_data_.at(id).price, id_to_data_.at(id).qty};
     }
     return {};
 }
@@ -211,11 +205,12 @@ std::pair<Price, Qty> OrderBook::get_offer_by_id(OfferID id) const noexcept
 std::map<OfferID, std::pair<Price, Qty>> OrderBook::pack_all_data() const noexcept
 {
     std::map<OfferID, std::pair<Price, Qty>> ret;
-    for (auto id : bids_.by_id_) {
-        ret.emplace(id, std::make_pair(id_to_price_.at(id), id_to_count_.at(id)));
-    }
-    for (auto id : asks_.by_id_) {
-        ret.emplace(id, std::make_pair(id_to_price_.at(id), id_to_count_.at(id)));
+
+    auto items = {&bids_, &asks_};
+    for (const auto& offer: items) {
+        for (auto id : offer->by_id_) {
+            ret.emplace(id, std::make_pair(id_to_data_.at(id).price, id_to_data_.at(id).qty));
+        }
     }
     return ret;
 }
