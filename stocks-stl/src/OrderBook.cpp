@@ -6,9 +6,9 @@
 
 namespace stl {
 
-OfferID OrderBook::add_order(OFFER offer_type, Price price, Qty quantity) noexcept
+OfferID OrderBook::add_order(OFFER order_type, Price price, Qty quantity) noexcept
 {
-    if (offer_type == OFFER::BID) {
+    if (order_type == OFFER::BID) {
         quantity = exchange_offers(asks_, price, quantity);
         add_offer_to(bids_, price, quantity, offer_id_);
     } else {
@@ -108,19 +108,14 @@ bool OrderBook::close_order(OfferID id, Qty quantity) noexcept
     }
 
     if (unordered_offer_id_.find(id) != unordered_offer_id_.end()) {
-
-        if (asks_.by_id_.find(id) != asks_.by_id_.end()) {
-            if (quantity == id_to_count_[id]) {
+        if (quantity == id_to_count_[id]) {
+            if (asks_.by_id_.find(id) != asks_.by_id_.end()) {
                 close_order_helper(id, asks_, quantity);
             } else {
-                id_to_count_[id] -= quantity;
+                close_order_helper(id, bids_, quantity);
             }
         } else {
-            if (quantity == id_to_count_[id]) {
-                close_order_helper(id, bids_, quantity);
-            } else {
-                id_to_count_[id] -= quantity;
-            }
+            id_to_count_[id] -= quantity;
         }
     }
     return true;
@@ -136,45 +131,31 @@ Qty OrderBook::get_l2_size() const noexcept
     return ret;
 }
 
-bool OrderBook::store(const std::string& name) const noexcept
+bool OrderBook::store(const std::string& name) noexcept
 {
     std::ofstream file(name);
     if (!file.is_open()) {
         return false;
     }
     nlohmann::json json;
+    auto items = {&bids_, &asks_};
+    for (const auto& offer: items) {
+        for (auto price = offer->by_price_.rbegin(); price != offer->by_price_.rend(); price++) {
 
-    Price prev{};
-    for (auto price = bids_.by_price_.rbegin(); price != bids_.by_price_.rend(); price++) {
-        if (prev == price->first) {
-            continue;
-        }
-        auto price_iter = price_to_id_.at(price->first);
-        for (auto id : price_iter) {
-            nlohmann::json offers_by_price;
-            offers_by_price["bid"]["id"] = id;
-            offers_by_price["bid"]["price"] = id_to_price_.at(id);
-            offers_by_price["bid"]["quantity"] = id_to_count_.at(id);
-            json += offers_by_price;
-        }
-        prev = price->first;
-    }
-    prev = 0;
-    for (auto price = asks_.by_price_.rbegin(); price != asks_.by_price_.rend(); price++) {
-        if (prev == price->first) {
-            continue;
-        }
-        auto price_iter = price_to_id_.at(price->first);
-        for (auto id : price_iter) {
-            nlohmann::json offers_by_price;
-            offers_by_price["ask"]["id"] = id;
-            offers_by_price["ask"]["price"] = id_to_price_.at(id);
-            offers_by_price["ask"]["quantity"] = id_to_count_.at(id);
-            json += offers_by_price;
-        }
-        prev = price->first;
-    }
+            std::set<OfferId>* ids_by_price = nullptr;
+            if (!get_offers_by_price(price->first, ids_by_price)) {
+                return false;
+            }
+            for (OfferId id : *ids_by_price) {
+                nlohmann::json offers_by_price;
+                offers_by_price[offer->order_type]["id"] = id;
+                offers_by_price[offer->order_type]["price"] = id_to_price_[id];
+                offers_by_price[offer->order_type]["quantity"] = id_to_count_[id];
+                json += offers_by_price;
+            }
 
+        }
+    }
     file << std::setw(4) << json << std::endl;
     return true;
 }
@@ -213,7 +194,7 @@ void OrderBook::create_offer_structure(const nlohmann::basic_json<>& json) noexc
 bool OrderBook::get_offers_by_price(Price price, std::set<OfferID>*& offers) noexcept
 {
     if (price_to_id_.count(price) != 0u) {
-        offers = &price_to_id_[price];
+        offers = &price_to_id_.at(price);
         return true;
     }
     return false;

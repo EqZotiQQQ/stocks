@@ -292,6 +292,36 @@ TEST(load_stl, load_json_test_failure)
     ASSERT_FALSE(l2.load("some_name.json"));
 }
 
+TEST(store_stl, store_load_json_test)
+{
+    OrderBook l2;
+
+    for (int i = 0; i < 5000; i++) {
+        Price price = rand() % 3000 + 50;
+        Price quantity = rand() % 1000 + 40;
+        l2.add_order(OFFER::BID, price, quantity);
+    }
+    ASSERT_TRUE(l2.store("stl_data.json"));
+
+    OrderBook l2_test;
+    ASSERT_TRUE(l2_test.load("stl_data.json"));
+    l2_test.store("stl_data2.json");
+
+    std::map<OfferID, std::pair<Price, Qty>> l2_data = l2.pack_all_data();
+    std::map<OfferID, std::pair<Price, Qty>> l2_test_data = l2_test.pack_all_data();
+
+    ASSERT_EQ(l2.get_l2_size(), l2_test.get_l2_size());
+
+    auto iter_l2_data = l2_data.begin();
+    auto iter_l2_test = l2_test_data.begin();
+    while(iter_l2_data != l2_data.end()) {
+        ASSERT_EQ(iter_l2_data->first, iter_l2_test->first);
+        ASSERT_EQ(iter_l2_data->second.first, iter_l2_test->second.first);
+        ASSERT_EQ(iter_l2_data->second.second, iter_l2_test->second.second);
+        iter_l2_data++; iter_l2_test++;
+    }
+}
+
 TEST(trade_stl, trade)
 {
     OrderBook l2;

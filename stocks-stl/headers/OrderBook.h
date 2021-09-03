@@ -45,7 +45,7 @@ public:
      * @param quantity number of offers
      * @return id of offer
      */
-    OfferID add_order(OFFER offer_type, Price price, Qty quantity) noexcept;
+    OfferID add_order(OFFER order_type, Price price, Qty quantity) noexcept;
 
     /***
      * close order on stock
@@ -60,7 +60,7 @@ public:
      * @param name name of json file
      * @return success of operation
      */
-    bool store(const std::string& name = "stocks-stl.json") const noexcept;
+    bool store(const std::string& name = "stocks-stl.json") noexcept;
 
     /***
      * load snapshot from file
