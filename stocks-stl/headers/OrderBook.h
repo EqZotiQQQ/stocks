@@ -120,7 +120,7 @@ private:
      * @param quantity number of offers
      * @param id offer id
      */
-    void add_offer_to(Orders orders, Price price, Qty quantity, OfferID id) noexcept;
+    void add_offer_to(Orders& orders, Price price, Qty quantity, OfferID id) noexcept;
 
     /***
      * closes existing asks if bid is less expensive or closes bid if ask is more expensive.
@@ -129,7 +129,7 @@ private:
      * @param quantity number of offers
      * @return
      */
-    Qty exchange_offers(Orders orders, Price price, Qty quantity) noexcept;
+    Qty exchange_offers(Orders& orders, Price price, Qty quantity) noexcept;
 
     /***
      * unpack data from and push them to level2
@@ -144,7 +144,7 @@ private:
      * @param offer_quantity number of offers
      * @return return number of offer then left after compensations opposite
      */
-    Qty close_order_helper(OfferID id, Orders orders, Qty offer_quantity);
+    Qty close_order_helper(OfferID id, Orders& orders, Qty offer_quantity);
 };
 
 }

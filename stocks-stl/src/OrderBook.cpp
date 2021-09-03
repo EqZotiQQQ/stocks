@@ -18,59 +18,63 @@ OfferID OrderBook::add_order(OFFER offer_type, Price price, Qty quantity) noexce
     return offer_id_++;
 }
 
-void OrderBook::add_offer_to(Orders orders, Price price, Qty quantity, OfferID id) noexcept
+void OrderBook::add_offer_to(Orders& orders, Price price, Qty quantity, OfferID id) noexcept
 {
     if (quantity != 0u) {
 
         if (!orders.unordered_price_.insert(price).second) {
             unordered_offer_id_.emplace(id);
+            price_to_id_[price].insert(id);
+            orders.by_price_[price]++;
+        } else {
+            price_to_id_.emplace(price, std::set<OfferID>{id});
+            orders.by_price_.emplace(price, 1);
         }
-        orders.by_price_[price]++;
         unordered_offer_id_.emplace(id);
         orders.by_id_.insert(id);
 
         id_to_count_.emplace(id, quantity);
         id_to_price_.emplace(id, price);
-
-        if (!price_to_id_.emplace(price, std::set<OfferID>{id}).second) {
-            price_to_id_[price].insert(id);
-        }
     }
 }
 
-Qty OrderBook::exchange_offers(Orders orders, Price offer_price, Qty offer_quantity) noexcept
+Qty OrderBook::exchange_offers(Orders& orders, Price offer_price, Qty offer_quantity) noexcept
 {
     if (offer_quantity == 0 || orders.by_id_.empty()) {
         return offer_quantity;
     }
 
-    Price most_expensive_order = asks_.by_price_.rbegin()->first;
-    std::cout << "expens: " << most_expensive_order << std::endl;
-    Price cheapest_order = bids_.by_price_.begin()->first;
-    std::cout << "cheapest: " << cheapest_order << std::endl;
+    Price target_price;
+    OfferId target_id;
+    Qty target_qty;
+    bool exchange_condition;
 
-    if (&orders == &bids_) {
-        if (most_expensive_order < offer_price) { /// red <= green - skip
-            return offer_quantity;
-        }
+    if (orders.order_type == "bid") {
+        target_price =   bids_.by_price_.begin()->first;
+        target_id =      *price_to_id_[target_price].begin();
+        target_qty =     id_to_count_[target_id];
+        exchange_condition = offer_price >= target_price;
     } else {
-        if (cheapest_order > offer_price) { /// red > green - skip
-            return offer_quantity;
-        }
+        target_price =   asks_.by_price_.rbegin()->first;
+        target_id =      *price_to_id_[target_price].begin();
+        target_qty =     id_to_count_[target_id];
+        exchange_condition = target_price >= offer_price;
     }
-    OfferID id_to_remove = *price_to_id_[cheapest_order].begin();
-    Qty existing_offer_count = id_to_count_[id_to_remove];
 
-    if (existing_offer_count > offer_quantity) {
-        __builtin_usubll_overflow(id_to_count_[id_to_remove], offer_quantity, &id_to_count_[id_to_remove]);
+    if (!exchange_condition) {
+        return offer_quantity;
+    }
+
+    if (target_qty > offer_quantity) {
+        __builtin_usubll_overflow(id_to_count_[target_id], offer_quantity, &id_to_count_[target_id]);
         offer_quantity = 0;
     } else {
-        offer_quantity = close_order_helper(id_to_remove, orders, offer_quantity);
+        offer_quantity = close_order_helper(target_id, orders, offer_quantity);
     }
     return exchange_offers(orders, offer_price, offer_quantity);
 }
 
-Qty OrderBook::close_order_helper(OfferID id, Orders orders, Qty offer_quantity)
+Qty OrderBook::close_order_helper(OfferID id, Orders& orders, Qty offer_quantity)
 {
     Price cheapest_order = orders.by_price_.begin()->first;
 
