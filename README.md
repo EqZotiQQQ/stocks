@@ -1,20 +1,15 @@
-Можно запихнуть в CLion и он подхватит и собрать то что нужно.
-В предыдущей версии я вам отправил версию с гитом, тут её не будет, т.к. там есть лишние вещи.
-Напирмер, там я ещё попробовал abseil либу юзать (гугловый аналог stl).
-Решил его не прикладывать, в общем, если надо - пишите - отдам)
+Simple orderbook written on C++14. Here is 2 implementations, using stl and abseil.
 
 
-Собрать стакан можно при помощи:
-
+build with:
 cmake . -B cmake-build-debug
-
 cmake --build cmake-build-debug -- -j16
 
-Запустить специфичный тесткейс:
-./stock_tests --gtest_filter=<testcase_name>
-
-Список тестов:
+tests list:
 ./stock_tests --gtest_list_tests
 
-Сгенерить список команд:
+launch specific testcase:
+./stock_tests --gtest_filter=<testcase_name>
+
+cmake commands that executes on build:
 cmake . -B cmake-build-debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON 
